@@ -29,7 +29,6 @@
     "lru-cache": "2.7.0",
     "moment": "2.10.6",
     "multer": "1.0.5",
-    "mysql": "2.8.0",
     "numeral": "1.5.3",
     "object-assign": "2.0.0",
     "react": "0.13.3",
