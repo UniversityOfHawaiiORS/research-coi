@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {merge} from '../../merge';
 import {ProgressIndicator} from './ProgressIndicator';
 import {COIConstants} from '../../../../COIConstants';
@@ -33,14 +33,6 @@ export class NavSidebar extends React.Component {
     if (!this.props.submitDisabled) {
       DisclosureActions.submitDisclosure();
     }
-  }
-
-  goBack() {
-    DisclosureActions.previousQuestion();
-  }
-
-  nextStep() {
-    DisclosureActions.nextStep();
   }
 
   render() {
@@ -98,7 +90,7 @@ export class NavSidebar extends React.Component {
       !this.props.nextDisabled
     ) {
       nextStep = (
-        <div onClick={this.nextStep} style={styles.nextquestion}>
+        <div onClick={DisclosureActions.nextStep} style={styles.nextquestion}>
           <i className="fa fa-arrow-circle-right" style={styles.icons}></i>
           <span style={styles.stepLabel}>
             NEXT STEP
@@ -107,18 +99,8 @@ export class NavSidebar extends React.Component {
       );
     }
 
-    let cancel;
     let submit;
     if (this.props.step === COIConstants.DISCLOSURE_STEP.CERTIFY) {
-      cancel = (
-        <div onClick={this.closeDisclosure} style={styles.nextquestion}>
-          <i className="fa fa-times-circle" style={styles.icons}></i>
-          <span style={styles.stepLabel}>
-            CANCEL
-          </span>
-        </div>
-      );
-
       let submitLabelStyle = styles.nextquestion;
       let submitIconStyle = styles.icons;
       if (this.props.submitDisabled) {
@@ -152,7 +134,7 @@ export class NavSidebar extends React.Component {
         </div>
 
         <div style={styles.stepButtons}>
-          <div onClick={this.goBack} style={styles.prevquestion}>
+          <div onClick={DisclosureActions.previousQuestion} style={styles.prevquestion}>
             <i className="fa fa-arrow-circle-left" style={styles.icons}></i>
             <span style={styles.stepLabel}>
               {previousLabel}
@@ -161,7 +143,6 @@ export class NavSidebar extends React.Component {
 
           {submit}
           {nextStep}
-          {cancel}
         </div>
       </span>
     );

@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../../merge';
 import {formatDate} from '../../../formatDate';
 import CheckLink from './CheckLink';
@@ -28,8 +28,8 @@ export default class EntityDeclaration extends React.Component {
     super();
 
     this.state = {
-      revising: false,
-      responding: false,
+      revising: props.revising ? props.revising : false,
+      responding: props.responding ? props.responding : false,
       responded: props.respondedTo !== null,
       revised: props.revised !== null,
       isValid: true
@@ -69,19 +69,19 @@ export default class EntityDeclaration extends React.Component {
     if (this.state.revising) {
       newState.revised = true;
       let radios = document.querySelectorAll(`[name="decType${this.props.entity.id}:${this.props.entity.projectId}"]`);
-      let selectedRadio;
+      let selectedRadio = {};
       for (let i = 0; i < radios.length; i++) {
         if (radios[i].checked) {
           selectedRadio = radios[i];
           break;
         }
       }
-      let declarationComment = React.findDOMNode(this.refs.declarationComment);
+      let declarationComment = this.refs.declarationComment ? this.refs.declarationComment : {};
       PIReviewActions.reviseDeclaration(this.props.entity.reviewId, selectedRadio.value, declarationComment.value);
     }
     else if (this.state.responding) {
       newState.responded = true;
-      let textarea = React.findDOMNode(this.refs.responseText);
+      let textarea = this.refs.responseText ? this.refs.responseText : {};
       PIReviewActions.respond(this.props.entity.reviewId, textarea.value);
     }
 
@@ -296,7 +296,7 @@ export default class EntityDeclaration extends React.Component {
     }
 
     return (
-      <div className="flexbox row" style={merge(styles.container, this.props.style)}>
+      <div className="flexbox row" style={merge(styles.container, this.props.style)} name='Entity Declaration'>
         <span style={styles.statusIcon}>
           {icon}
         </span>

@@ -16,10 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {ResponsiveComponent} from '../../ResponsiveComponent';
 import {merge} from '../../../merge';
-import {SortArrow} from './SortArrow';
+import SortArrow from './SortArrow';
 
 export class TableHeading extends ResponsiveComponent {
   constructor() {

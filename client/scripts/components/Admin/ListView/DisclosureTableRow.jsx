@@ -16,12 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {merge} from '../../../merge';
 import {formatDate} from '../../../formatDate';
-import ReactRouter from 'react-router';
 import ConfigStore from '../../../stores/ConfigStore';
-let Link = ReactRouter.Link;
+import {Link} from 'react-router';
 
 export class DisclosureTableRow extends React.Component {
   highlightSearchTerm(value) {
@@ -67,7 +66,7 @@ export class DisclosureTableRow extends React.Component {
     return (
       <div role="row" style={merge(styles.container, this.props.style)}>
         <span role="gridcell" style={merge(styles.value, styles.firstColumn)}>
-          <Link to={`/detailview/${this.props.id}/${this.props.statusCd}`}>
+          <Link to={`/coi/admin/detailview/${this.props.id}/${this.props.statusCd}`}>
             {this.highlightSearchTerm(this.props.submittedBy)}
           </Link>
         </span>

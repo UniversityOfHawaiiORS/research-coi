@@ -1,12 +1,8 @@
 INSTRUCTIONS
 ================
 
-**Step 1**: download and install [Node.js and npm](https://docs.npmjs.com/getting-started/installing-node)
-```
-Current version in use: 0.12.4
-You may want to install nvm (Node Version Manager) to make it
-easy to switch versions.
-```
+**Step 1**: download and install [Node.js and npm](https://docs.npmjs.com/getting-started/installing-node) version 0.12.7 or newer.
+
 ----------
 **Step 2**: clone [research-coi project](https://github.com/kuali/research-coi)
 ```
@@ -17,22 +13,20 @@ git clone https://github.com/kuali/research-coi research-coi
 **Step 3**: install dependecies
 ```
 cd ~/workspace/research-coi
-```
-edit package.json and remove either mysql or strong-oracle from dependencies
-<br><br>
-if using strong-oracle go through the install process listed for [strong-oracle](https://github.com/strongloop/strong-oracle), including drivers.
-```
 npm install
 
+If using Oracle:
+  npm uninstall mysql
+  npm install strong-oracle --save
+  Go through the install process listed for [strong-oracle](https://github.com/strongloop/strong-oracle), including drivers.
 ```
 ----------
 **Step 4**: Create Database
-mysql
 ```
+For MySQL:
 create database coi;
-```
-or oracle
-```
+
+For Oracle:
 CREATE USER coi IDENTIFIED BY "&pw";
 grant create session to coidemo;
 grant create procedure to coidemo;
@@ -44,8 +38,9 @@ alter user coi default tablespace coi;
 
 ----------
 **Step 5**: Create knexfile.js
-mysql
 ```
+For MySQL:
+
 module.exports = {
   kc_coi: {
     client: 'mysql',
@@ -60,9 +55,9 @@ module.exports = {
     max: 20
   }
 };
-```
-OR oracle
-```
+
+For Oracle:
+
 module.exports = {
   kc_coi: {
     client: 'strong-oracle',
@@ -88,12 +83,17 @@ node ~/workspace/kc-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --kn
 ```
 node ~/workspace/kc-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> seed:run --env kc_coi
 ```
+
+Alternately you can add some demonstration data to play with:
+```
+node ~/workspace/kc-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> seed:run --env kc_coi demo
+```
+
 **Step 8**: Configuration Environment Variables:
 
 System configuration for COI is done with environment variables. Environment variables can either be set in the system or added on the command line when starting the application. Below is a list of configuration environment variables
 
 >####**Environment Configuration Variables**
-
 >**COI_PORT**
 >: port for the coi app.
 >*Default*: 8090
@@ -129,6 +129,14 @@ System configuration for COI is done with environment variables. Environment var
 >**LOCAL_FILE_DESTINATION**
 >:  file system location to store attachments
 >*Default*: uploads/
+>
+>**LOG_LEVEL**
+>:  the log level to use.  0 (Info), 1 (Warn), 2 (Error)
+>*Default*: 2
+>
+>**TRUST_PROXY**
+>: The value to pass to app.set('trust_proxy', <YOUR STRING HERE>)
+>*Default*:  None
 
 -------
 
@@ -141,7 +149,7 @@ System configuration for COI is done with environment variables. Environment var
 >Configuration variables to enable the auth service are below.
 >
 >**AUTH_ENABLED**
->: flag as true if you have an auth service instance you can work with, if not present or false app will use a mock auth service.
+>: Flag as true if you have an auth service instance you can work with, if not present or false app will use a mock auth service.
 >*Default*: false
 >
 >**CACHE_MAX**
@@ -160,10 +168,16 @@ System configuration for COI is done with environment variables. Environment var
 > : The role name space and name separated by a colon.
 > *Default*:  KC-COIDISCLOSURE:COI%20Administrator
 
+>**AUTH_OVER_SSL**
+> : If your are sure you want to use the auth service over http set this to false.
+> *Default*:  true
+
+
 **Step 9**: Run Webpack
 ```
-./node_modules/.bin/webpack
+npm run webpack
 ```
+This may take a few minutes. There will likely be some warnings, but there should no errors.
 
 **Step 10**: Start Up Node
 ```

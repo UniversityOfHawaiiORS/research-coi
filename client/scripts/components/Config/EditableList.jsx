@@ -16,9 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../merge';
-import PencilIcon from '../DynamicIcons/PencilIcon';
 import CheckmarkIcon from '../DynamicIcons/CheckmarkIcon';
 import {COIConstants} from '../../../../COIConstants';
 
@@ -42,7 +41,7 @@ class EditableItem extends React.Component {
     });
 
     requestAnimationFrame(() => {
-      let textbox = React.findDOMNode(this.refs.textbox);
+      let textbox = this.refs.textbox;
       if (textbox) {
         textbox.focus();
       }
@@ -64,7 +63,7 @@ class EditableItem extends React.Component {
     this.setState({
       editing: false
     });
-    let textbox = React.findDOMNode(this.refs.textbox);
+    let textbox = this.refs.textbox;
     this.props.onEdit(this.props.id, this.props.typeCd, textbox.value);
   }
 
@@ -74,8 +73,7 @@ class EditableItem extends React.Component {
         marginBottom: 8
       },
       editIcon: {
-        width: 35,
-        height: 18,
+        fontSize: 14,
         color: window.colorBlindModeOn ? 'black' : '#0095A0',
         verticalAlign: 'middle',
         padding: '0 10px',
@@ -137,7 +135,7 @@ class EditableItem extends React.Component {
     else {
       content = (
         <div style={merge(styles.container, this.props.style)}>
-          <PencilIcon style={styles.editIcon} onClick={this.edit} />
+          <i className="fa fa-pencil" style={styles.editIcon} onClick={this.edit}></i>
           <span style={styles.deleteIcon} onClick={this.delete}>X</span>
           <span style={styles.text}>{this.props.children}</span>
         </div>
@@ -168,7 +166,7 @@ export default class EditableList extends React.Component {
     });
 
     requestAnimationFrame(() => {
-      let textbox = React.findDOMNode(this.refs.textbox);
+      let textbox = this.refs.textbox;
       if (textbox) {
         textbox.focus();
       }
@@ -212,7 +210,7 @@ export default class EditableList extends React.Component {
   }
 
   addItem() {
-    let textbox = React.findDOMNode(this.refs.textbox);
+    let textbox = this.refs.textbox;
     if (textbox.value.length > 0) {
       let newItems = Array.from(this.props.items);
 

@@ -16,16 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
-import {ProminentButton} from '../../ProminentButton';
+import React from 'react';
+import {GreyButton} from '../../GreyButton';
+import {BlueButton} from '../../BlueButton';
 import {formatDate} from '../../../formatDate';
 import {COIConstants} from '../../../../../COIConstants';
 import {TravelLogActions} from '../../../actions/TravelLogActions';
+import {TravelLogStore} from '../../../stores/TravelLogStore';
 import TextField from '../TextField';
 import CurrencyField from '../CurrencyField';
 import DateRangeField from '../DateRangeField';
+import numeral from 'numeral';
 
-export class Entry extends React.Component {
+export default class Entry extends React.Component {
   constructor() {
     super();
 
@@ -52,7 +55,13 @@ export class Entry extends React.Component {
   }
 
   saveEntry() {
-    TravelLogActions.saveEntry(this.props.travelLog.relationshipId);
+    let errors = TravelLogStore.getErrorsForId(this.props.travelLog.relationshipId);
+    let isValid = Object.keys(errors).length === 0;
+    if (isValid) {
+      TravelLogActions.saveEntry(this.props.travelLog.relationshipId);
+    } else {
+      TravelLogActions.turnOnValidationsForEntry(this.props.travelLog.relationshipId);
+    }
   }
 
   cancelEntry() {
@@ -76,60 +85,38 @@ export class Entry extends React.Component {
       container: {
         marginTop: '44px',
         backgroundColor: 'white',
-        padding: '10px 20px',
-        borderRadius: 5
+        padding: '15px 20px',
+        borderRadius: 5,
+        boxShadow: '0 0 10px #C0C0C0'
       },
       entityName: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        width: '35%',
-        display: 'inline-block'
+        display: 'inline-block',
+        width: '95%',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        fontSize: 24
       },
-      left: {
-        width: '70%',
-        display: 'inline-block'
+      actionButtonContainer: {
+        display: 'inline-block',
+        width: 150,
+        textAlign: 'right',
+        position: 'relative'
       },
-      midDot: {
-        float: 'right',
-        marginRight: '10px'
-      },
-      dates: {
-        width: '55%',
-        display: 'inline-block'
-      },
-      label: {
-        fontSize: 14,
-        marginRight: '5px'
-      },
-      reason: {
-        marginTop: 10
+      editingActionButtons: {
+        textAlign: 'right',
+        borderTop: '1px solid #CCC',
+        padding: '13px 10px 0px 0px'
       },
       data: {
-        fontWeight: 550
-      },
-      buttons: {
-        width: '30%',
-        display: 'inline-block',
-        verticalAlign: 'bottom'
-      },
-      button: {
-        margin: '5'
-      },
-      amount: {
-        width: '55%',
-        display: 'inline-block'
-      },
-      destination: {
-        width: '35%',
-        display: 'inline-block'
-      },
-      middle: {
-        marginTop: 10
+        fontWeight: 'bold',
+        marginLeft: 5
       },
       textField: {
         container: {
           display: 'inline-block',
-          width: '33%'
+          width: '50%',
+          marginBottom: 10
         },
         input: {
           padding: '2px 8px',
@@ -141,8 +128,17 @@ export class Entry extends React.Component {
         },
         label: {
           marginBottom: 5,
-          fontWeight: '500'
+          display: 'block',
+          fontSize: 12
         }
+      },
+      button: {
+        marginBottom: 3
+      },
+      archiveButton: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0
       }
     };
 
@@ -151,9 +147,9 @@ export class Entry extends React.Component {
 
     if (this.props.travelLog.disclosedDate) {
       disclosedDate = (
-        <div style={{marginBottom: '25px'}}>
-          <span style={styles.label}>Disclosure Date:</span>
-          <span name="Dates" data-for={this.props.travelLog.entityName} style={styles.data}>{formatDate(this.props.travelLog.disclosedDate)}</span>
+        <div style={{marginTop: 3}}>
+          <div style={styles.label}>Disclosure Date:</div>
+          <div name="Disclosure Date" data-for={this.props.travelLog.entityName} style={styles.data}>{formatDate(this.props.travelLog.disclosedDate)}</div>
         </div>
       );
     }
@@ -162,111 +158,133 @@ export class Entry extends React.Component {
 
     if (this.props.travelLog.active === 1) {
       archiveButton = (
-        <ProminentButton name="Archive" data-for={this.props.travelLog.entityName} onClick={this.archiveEntry} style={styles.button}>Archive</ProminentButton>
+        <GreyButton name="Archive" data-for={this.props.travelLog.entityName} onClick={this.archiveEntry} style={styles.archiveButton}>
+          Archive
+        </GreyButton>
       );
     }
 
     if (this.props.editing === true) {
       actionButtons = (
-        <div style={styles.buttons}>
-          <ProminentButton name="Save" data-for={this.props.travelLog.entityName} onClick={this.saveEntry} style={styles.button}>Save</ProminentButton>
-          <ProminentButton name="Cancel" data-for={this.props.travelLog.entityName} onClick={this.cancelEntry} style={styles.button}>Cancel</ProminentButton>
+        <div style={styles.editingActionButtons}>
+          <BlueButton name="Done" data-for={this.props.travelLog.entityName} onClick={this.saveEntry} style={{marginRight: 7}}>Save</BlueButton>
+          <GreyButton name="Cancel" data-for={this.props.travelLog.entityName} onClick={this.cancelEntry} style={{marginRight: 7}}>Cancel</GreyButton>
         </div>
       );
     } else if (this.props.travelLog.status === COIConstants.RELATIONSHIP_STATUS.DISCLOSED) {
       actionButtons = (
         <div style={styles.buttons}>
-          {disclosedDate}
           {archiveButton}
         </div>
       );
     } else {
       actionButtons = (
-        <div style={styles.buttons}>
-          <ProminentButton name="Edit" data-for={this.props.travelLog.entityName} onClick={this.editEntry} style={styles.button}>Edit</ProminentButton>
-          <ProminentButton name="Delete" data-for={this.props.travelLog.entityName} onClick={this.deleteEntry} style={styles.button}>Delete</ProminentButton>
+        <div style={{position: 'absolute', bottom: 0, right: 0}}>
+          <div>
+            <GreyButton name="Edit" data-for={this.props.travelLog.entityName} onClick={this.editEntry} style={styles.button}>EDIT</GreyButton>
+          </div>
+          <div>
+            <GreyButton name="Delete" data-for={this.props.travelLog.entityName} onClick={this.deleteEntry} style={styles.button} >DELETE</GreyButton>
+          </div>
         </div>
       );
     }
 
     let jsx;
     if (this.props.editing) {
+      let errors = TravelLogStore.getErrorsForId(this.props.travelLog.relationshipId);
       jsx = (
-        <div>
-          <TextField
-          id='entityName'
-          label='ENTITY NAME'
-          onChange={this.updateField}
-          name="Entity Name"
-          styles={styles.textField}
-          value={this.props.travelLog.entityName}
-          />
-          <CurrencyField
-          id='amount'
-          label='AMOUNT'
-          onChange={this.updateField}
-          name="Amount"
-          styles={styles.textField}
-          value={this.props.travelLog.amount}
-          />
-          <TextField
-          id='destination'
-          label='DESTINATION'
-          onChange={this.updateField}
-          name="Destinantion"
-          styles={styles.textField}
-          value={this.props.travelLog.destination}
-          />
-          <DateRangeField
-          id='dateRange'
-          label='DATE RANGE'
-          onStartDateChange={this.updateStartDate}
-          onEndDateChange={this.updateEndDate}
-          styles={styles.textField}
-          startDate={this.props.travelLog.startDate}
-          endDate={this.props.travelLog.endDate}
-          />
-          <TextField
-          id='reason'
-          label='REASON'
-          onChange={this.updateField}
-          name="Reason"
-          styles={styles.textField}
-          value={this.props.travelLog.reason}
-          />
+        <div name='Entry Editor'>
+          <div style={{marginBottom: 9}}>
+            <TextField
+              id='entityName'
+              label='ENTITY NAME'
+              onChange={this.updateField}
+              name="Entity Name"
+              styles={styles.textField}
+              value={this.props.travelLog.entityName}
+              invalid={this.props.validating && errors.entityName ? true : false}
+            />
+          </div>
+          <div style={{marginBottom: 9}}>
+            <CurrencyField
+              id='amount'
+              label='AMOUNT'
+              onChange={this.updateField}
+              name="Amount"
+              styles={styles.textField}
+              value={this.props.travelLog.amount}
+              invalid={this.props.validating && errors.amount ? true : false}
+            />
+            <TextField
+              id='destination'
+              label='DESTINATION'
+              onChange={this.updateField}
+              name="Destinantion"
+              styles={styles.textField}
+              value={this.props.travelLog.destination}
+              invalid={this.props.validating && errors.destination ? true : false}
+            />
+          </div>
+          <div style={{marginBottom: 15}}>
+            <DateRangeField
+              id='dateRange'
+              label='DATE RANGE'
+              onStartDateChange={this.updateStartDate}
+              onEndDateChange={this.updateEndDate}
+              styles={styles.textField}
+              startDate={this.props.travelLog.startDate}
+              endDate={this.props.travelLog.endDate}
+              startDateInvalid={this.props.validating && errors.startDate ? true : false}
+              endDateInvalid={this.props.validating && errors.endDate ? true : false}
+            />
+            <TextField
+              id='reason'
+              label='REASON'
+              onChange={this.updateField}
+              name="Reason"
+              styles={styles.textField}
+              value={this.props.travelLog.reason}
+              invalid={this.props.validating && errors.reason ? true : false}
+            />
+          </div>
           {actionButtons}
         </div>
       );
     } else {
       jsx = (
-        <div>
-          <div style={styles.left}>
-            <div>
-              <div name="Name" style={styles.entityName}>
-                {this.props.travelLog.entityName}
-                <span style={styles.midDot}>&middot;</span>
-              </div>
-              <div style={styles.dates}>
+        <div className="flexbox row" name='Entry Viewer'>
+          <span className="fill">
+            <div style={{marginBottom: 10}}>
+              <span style={{width: '50%', fontSize: 20, fontWeight: 'bold', verticalAlign: 'middle'}}>
+                <div style={styles.entityName}>{this.props.travelLog.entityName}</div>
+              </span>
+              <span style={{width: '50%', verticalAlign: 'middle'}}>
                 <span style={styles.label}>Dates:</span>
-                <span name="Dates" data-for={this.props.travelLog.entityName} style={styles.data}>{formatDate(this.props.travelLog.startDate)} - {formatDate(this.props.travelLog.endDate)}</span>
-              </div>
+                <span name="Dates" data-for={this.props.travelLog.entityName} style={styles.data}>
+                  {formatDate(this.props.travelLog.startDate) + ' - ' + formatDate(this.props.travelLog.endDate)}
+                </span>
+              </span>
             </div>
-            <div style={styles.middle}>
-              <div style={styles.destination}>
+            <div style={{marginBottom: 10}}>
+              <span style={{width: '50%'}}>
                 <span style={styles.label}>Destination:</span>
                 <span name="Destination" data-for={this.props.travelLog.entityName} style={styles.data}>{this.props.travelLog.destination}</span>
-              </div>
-              <div style={styles.amount}>
+              </span>
+              <span style={{width: '50%'}}>
                 <span style={styles.label}>Amount:</span>
-                <span name="Amount" data-for={this.props.travelLog.entityName} style={styles.data}>${this.props.travelLog.amount}</span>
-              </div>
+                <span name="Amount" data-for={this.props.travelLog.entityName} style={styles.data}>{numeral(this.props.travelLog.amount).format('$0,0.00')}</span>
+              </span>
             </div>
-            <div style={styles.reason}>
+            <div>
               <span style={styles.label}>Reason:</span>
               <span name="Reason" data-for={this.props.travelLog.entityName} style={styles.data}>{this.props.travelLog.reason}</span>
             </div>
-          </div>
-          {actionButtons}
+          </span>
+          <span style={styles.actionButtonContainer}>
+            {disclosedDate}
+            {actionButtons}
+          </span>
         </div>
       );
     }

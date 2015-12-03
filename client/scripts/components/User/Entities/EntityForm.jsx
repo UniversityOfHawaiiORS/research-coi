@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {GreyButton} from '../../GreyButton';
 import {merge} from '../../../merge';
 import {EntityFormNameStep} from './EntityFormNameStep';
@@ -120,6 +120,12 @@ export class EntityForm extends React.Component {
   }
 
   edit() {
+    if (!DisclosureStore.entityInformationStepComplete(this.props.entity.id)) {
+      DisclosureActions.turnOnValidation(1);
+    }
+    if (!DisclosureStore.entityRelationshipsAreSubmittable(this.props.entity.id)) {
+      DisclosureActions.turnOnValidation(2);
+    }
     DisclosureActions.editEntity(this.props.entity.id);
   }
 

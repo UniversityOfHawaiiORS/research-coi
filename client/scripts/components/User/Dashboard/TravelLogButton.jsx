@@ -1,3 +1,4 @@
+/* @flow */
 /*
     The Conflict of Interest (COI) module of Kuali Research
     Copyright © 2015 Kuali, Inc.
@@ -16,53 +17,42 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../../merge';
-import Router from 'react-router';
 import ConfigStore from '../../../stores/ConfigStore';
 import {COIConstants} from '../../../../../COIConstants';
+import {Link} from 'react-router';
 
-let Link = Router.Link;
+export function TravelLogButton(props: Object): React.Element {
+  let styles = {
+    container: {
+      display: 'block',
+      backgroundColor: '#eeeeee',
+      verticalAlign: 'top',
+      padding: '20px 30px 20px 30px',
+      cursor: 'pointer',
+      color: '#444',
+      fontWeight: '300',
+      borderTop: '1px solid #c0c0c0'
+    },
+    primary: {
+      fontSize: 28,
+      fontWeight: 300
+    },
+    secondary: {
+      fontSize: 22,
+      fontWeight: 'bold'
+    }
+  };
 
-export class TravelLogButton extends React.Component {
-   constructor() {
-    super();
-    this.commonStyles = {
-    };
-  }
-
-  render() {
-    let styles = {
-      container: {
-        display: 'block',
-        backgroundColor: '#eeeeee',
-        verticalAlign: 'top',
-        padding: '20px 30px 20px 30px',
-        cursor: 'pointer',
-        color: '#444',
-        fontWeight: '300',
-        borderTop: '1px solid #c0c0c0'
-      },
-      primary: {
-        fontSize: 28,
-        fontWeight: 300
-      },
-      secondary: {
-        fontSize: 22,
-        fontWeight: 'bold'
-      }
-    };
-    styles = merge(this.commonStyles, styles);
-
-    return (
-      <Link to="travelLog" style={merge(styles.container, this.props.style)}>
-        <div>
-          <span>
-            <div style={styles.primary}>Update</div>
-            <div style={styles.secondary}>{ConfigStore.getDisclosureTypeString(COIConstants.DISCLOSURE_TYPE.TRAVEL)}</div>
-          </span>
-        </div>
-      </Link>
-    );
-  }
+  return (
+    <Link to={`/coi/travelLog`} style={merge(styles.container, props.style)}>
+      <div>
+        <span>
+          <div style={styles.primary}>Update</div>
+          <div style={styles.secondary}>{ConfigStore.getDisclosureTypeString(COIConstants.DISCLOSURE_TYPE.TRAVEL)}</div>
+        </span>
+      </div>
+    </Link>
+  );
 }

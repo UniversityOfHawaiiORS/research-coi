@@ -16,13 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {ResponsiveComponent} from '../../ResponsiveComponent';
 import {merge} from '../../../merge';
 import {DisclosureActions} from '../../../actions/DisclosureActions';
 import {EntityRelation} from '../EntityRelation';
 import {BlueButton} from '../../BlueButton';
-import {ProminentButton} from '../../ProminentButton';
 
 export class ManualRelationDialog extends ResponsiveComponent {
   constructor() {
@@ -66,7 +65,7 @@ export class ManualRelationDialog extends ResponsiveComponent {
     DisclosureActions.setAllForProject(
       'MANUAL',
       this.props.projectId,
-      this.refs.setAllSelect.getDOMNode().value
+      this.refs.setAllSelect.value
     );
   }
 
@@ -153,7 +152,7 @@ export class ManualRelationDialog extends ResponsiveComponent {
         </div>
         <div style={styles.buttons}>
           <div>
-            <ProminentButton onClick={this.props.onSave} style={styles.button}>Done</ProminentButton>
+            <BlueButton onClick={this.props.onSave} style={styles.button}>Done</BlueButton>
           </div>
         </div>
       </div>

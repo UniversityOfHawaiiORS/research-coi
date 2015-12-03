@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../../merge';
 import Sidebar from '../Sidebar';
 import Panel from '../Panel';
@@ -25,8 +25,10 @@ import InstructionEditor from '../InstructionEditor';
 import ConfigStore from '../../../stores/ConfigStore';
 import DeclarationType from './DeclarationType';
 import DeleteLink from '../DeleteLink';
+import DoneLink from '../DoneLink';
 import ConfigActions from '../../../actions/ConfigActions';
 import {COIConstants} from '../../../../../COIConstants';
+import {AppHeader} from '../../AppHeader';
 
 export default class Declarations extends React.Component {
   constructor() {
@@ -64,7 +66,7 @@ export default class Declarations extends React.Component {
   }
 
   updateNewValue() {
-    let textbox = React.findDOMNode(this.refs.newType);
+    let textbox = this.refs.newType;
     ConfigActions.setNewDeclarationTypeText(textbox.value);
   }
 
@@ -72,6 +74,11 @@ export default class Declarations extends React.Component {
     let styles = {
       container: {
         minHeight: 100
+      },
+      header: {
+        boxShadow: '0 1px 6px #D1D1D1',
+        zIndex: 10,
+        position: 'relative'
       },
       content: {
         backgroundColor: '#F2F2F2',
@@ -85,7 +92,7 @@ export default class Declarations extends React.Component {
         color: '#525252',
         fontWeight: 300,
         backgroundColor: 'white',
-        minHeight: 68
+        minHeight: 70
       },
       configurationArea: {
         padding: 35,
@@ -108,9 +115,9 @@ export default class Declarations extends React.Component {
         padding: 3,
         fontSize: 16
       },
-      deleteLink: {
-        float: 'right',
-        paddingTop: 2
+      editLink: {
+        paddingTop: 2,
+        marginLeft: 3
       }
     };
 
@@ -150,12 +157,12 @@ export default class Declarations extends React.Component {
       newType = (
         <div style={{margin: '0 20px 0 10px'}}>
           <input type="text" ref="newType" value={this.state.applicationState.newTypeText} style={styles.textbox} onKeyUp={this.lookForEnter} onChange={this.updateNewValue} />
-          <DeleteLink style={styles.deleteLink} onClick={ConfigActions.deleteInProgressCustomDeclarationType} />
+          <DoneLink style={styles.editLink} onClick={ConfigActions.saveNewDeclarationType} />
         </div>
       );
 
       requestAnimationFrame(() => {
-        React.findDOMNode(this.refs.newType).focus();
+        this.refs.newType.focus();
       });
     }
 
@@ -165,34 +172,37 @@ export default class Declarations extends React.Component {
     }
 
     return (
-      <div className="fill flexbox row" style={merge(styles.container, this.props.style)}>
-        <Sidebar active="declarations" />
-        <span style={styles.content} className="inline-flexbox column fill">
-          <div style={styles.stepTitle}>
-            Customize Project Declarations
-          </div>
-          <div className="fill flexbox row" style={styles.configurationArea}>
-            <span className="fill" style={{display: 'inline-block'}}>
-              <InstructionEditor
-                step={COIConstants.INSTRUCTION_STEP.PROJECT_DECLARATIONS}
-                value={instructionText}
-              />
-              <Panel title="Declaration Types">
-                <div style={styles.types}>
-                  {typesJsx}
+      <div className="flexbox column" style={{height: '100%'}}>
+        <AppHeader style={styles.header} />
+        <div className="fill flexbox row" style={merge(styles.container, this.props.style)}>
+          <Sidebar active="declarations" />
+          <span style={styles.content} className="inline-flexbox column fill">
+            <div style={styles.stepTitle}>
+              Customize Project Declarations
+            </div>
+            <div className="fill flexbox row" style={styles.configurationArea}>
+              <span className="fill" style={{display: 'inline-block'}}>
+                <InstructionEditor
+                  step={COIConstants.INSTRUCTION_STEP.PROJECT_DECLARATIONS}
+                  value={instructionText}
+                />
+                <Panel title="Declaration Types">
+                  <div style={styles.types}>
+                    {typesJsx}
 
-                  {customTypes}
-                  {newType}
-                  <div style={styles.add} onClick={ConfigActions.startEnteringNewDeclarationType}>+ Add Another</div>
-                </div>
+                    {customTypes}
+                    {newType}
+                    <div style={styles.add} onClick={ConfigActions.startEnteringNewDeclarationType}>+ Add Another</div>
+                  </div>
 
-                <div style={{paddingBottom: 10}}>
-                </div>
-              </Panel>
-            </span>
-            <ActionPanel visible={this.state.dirty} />
-          </div>
-        </span>
+                  <div style={{paddingBottom: 10}}>
+                  </div>
+                </Panel>
+              </span>
+              <ActionPanel visible={this.state.dirty} />
+            </div>
+          </span>
+        </div>
       </div>
     );
   }

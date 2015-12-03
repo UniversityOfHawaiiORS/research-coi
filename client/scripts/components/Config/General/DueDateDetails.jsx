@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {DatePicker} from '../../DatePicker';
 import {merge} from '../../../merge';
 import ConfigActions from '../../../actions/ConfigActions';
@@ -31,14 +31,14 @@ export default class DueDateDetails extends React.Component {
   }
 
   makeRolling() {
-    let rollingRadio = React.findDOMNode(this.refs.rolling);
+    let rollingRadio = this.refs.rolling;
     if (rollingRadio.checked) {
       ConfigActions.setIsRollingDueDate(true);
     }
   }
 
   makeStatic() {
-    let staticRadio = React.findDOMNode(this.refs.static);
+    let staticRadio = this.refs.static;
     if (staticRadio.checked) {
       ConfigActions.setIsRollingDueDate(false);
     }
@@ -51,8 +51,7 @@ export default class DueDateDetails extends React.Component {
   render() {
     let styles = {
       container: {
-        marginLeft: this.props.showTitleQuestion ? 0 : 20,
-        marginBottom: 15
+        margin: '0 23px 15px 23px'
       },
       notificationQuestion: {
         fontWeight: 'bold',

@@ -16,22 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
-import {merge} from '../../../merge';
+import React from 'react';
+import {AppHeader} from '../../AppHeader';
 import {TravelLogHeader} from './TravelLogHeader';
-import {TravelLogForm} from './TravelLogForm';
-import {TravelLogSort} from './TravelLogSort.jsx';
+import TravelLogForm from './TravelLogForm';
+import TravelLogSort from './TravelLogSort';
 import {BackToDashBoardButton} from './BackToDashBoardButton';
 import {TravelLogStore} from '../../../stores/TravelLogStore';
 import {TravelLogActions} from '../../../actions/TravelLogActions';
-import {Entry} from './Entry';
+import Entry from './Entry';
 
-export class TravelLog extends React.Component {
+export default class TravelLog extends React.Component {
   constructor() {
     super();
-    this.commonStyles = {
-    };
-
     let storeState = TravelLogStore.getState();
     this.state = {
       entries: storeState.entries,
@@ -39,6 +36,7 @@ export class TravelLog extends React.Component {
       validating: storeState.validating,
       entryStates: storeState.entryStates
     };
+
 
     this.onChange = this.onChange.bind(this);
   }
@@ -64,6 +62,11 @@ export class TravelLog extends React.Component {
 
   render() {
     let styles = {
+      header: {
+        boxShadow: '0 1px 6px #D1D1D1',
+        zIndex: 10,
+        position: 'relative'
+      },
       top: {
         marginTop: 20
       },
@@ -84,41 +87,45 @@ export class TravelLog extends React.Component {
         backgroundColor: '#eeeeee'
       },
       entryList: {
-        width: '65%',
+        maxWidth: 900,
         margin: '44px 50px',
-        borderTop: '1px solid grey',
+        borderTop: '1px solid #CCC',
         paddingTop: '44px'
       }
     };
-    styles = merge(this.commonStyles, styles);
+
 
     let travelLogs;
     if (this.state.entries.length > 0) {
       travelLogs = this.state.entries.map(travelLog => {
         return (
           <Entry
+            key={travelLog.relationshipId}
             travelLog={travelLog}
             editing={this.state.entryStates[travelLog.relationshipId] ? this.state.entryStates[travelLog.relationshipId].editing : false}
+            validating={this.state.entryStates[travelLog.relationshipId] ? this.state.entryStates[travelLog.relationshipId].validating : false}
           />
         );
       });
     }
 
     return (
-      <span className="flexbox row fill" style={merge(styles.container, this.props.style)}>
-        <span style={styles.sidebar}>
-          <BackToDashBoardButton/>
+      <div className="flexbox column" style={{height: '100%'}} name='Travel Log'>
+        <AppHeader style={styles.header} />
+        <span className="flexbox row fill" style={styles.container}>
+          <span style={styles.sidebar}>
+            <BackToDashBoardButton/>
+          </span>
+          <span className="fill" style={styles.content}>
+            <TravelLogHeader/>
+            <TravelLogForm entry={this.state.potentialEntry} validating={this.state.validating}/>
+            <div style={styles.entryList}>
+              <TravelLogSort/>
+              {travelLogs}
+            </div>
+          </span>
         </span>
-        <span className="fill" style={styles.content}>
-          <TravelLogHeader/>
-          <TravelLogForm entry={this.state.potentialEntry} validating={this.state.validating}/>
-          <div style={styles.entryList}>
-            <TravelLogSort/>
-            {travelLogs}
-          </div>
-        </span>
-
-      </span>
+      </div>
     );
   }
 }

@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {merge} from '../../../merge';
 import {DisclosureStore} from '../../../stores/DisclosureStore';
 import {Question} from './Question';
@@ -156,7 +156,7 @@ export class EntityFormInformationStep extends React.Component {
     return (
       <span style={merge(styles.container, this.props.style)}>
         {heading}
-        <div>
+        <div style={{color: '#333'}}>
           {questions}
         </div>
 

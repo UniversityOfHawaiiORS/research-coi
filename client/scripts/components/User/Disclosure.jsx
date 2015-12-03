@@ -16,8 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../merge';
+import {AppHeader} from '../AppHeader';
 import {Sidebar} from './Sidebar';
 import {DisclosureHeader} from './DisclosureHeader';
 import {DisclosureStore} from '../../stores/DisclosureStore';
@@ -110,9 +111,26 @@ export class Disclosure extends React.Component {
     return undefinedFound;
   }
 
+  incompleteEntityExists(entities) {
+    if (!entities) {
+      return false;
+    }
+
+    let incompleteEntity = false;
+    entities.filter(entity=> {
+      return entity.active === 1;
+    })
+    .forEach(entity => {
+      if (!DisclosureStore.entityInformationStepComplete(entity.id)
+      || !DisclosureStore.entityRelationshipsAreSubmittable(entity.id)) {
+        incompleteEntity = true;
+      }
+    });
+    return incompleteEntity;
+  }
   componentDidMount() {
     DisclosureStore.listen(this.onChange);
-    let disclosureType = this.context.router.getCurrentQuery().type;
+    let disclosureType = this.props.location.query.type;
     DisclosureActions.loadDisclosureData(disclosureType);
   }
 
@@ -142,6 +160,11 @@ export class Disclosure extends React.Component {
         padding: '0',
         minHeight: 100
       },
+      header: {
+        boxShadow: '0 1px 6px #D1D1D1',
+        zIndex: 10,
+        position: 'relative'
+      },
       content: {
         verticalAlign: 'top',
         width: '80%',
@@ -166,7 +189,7 @@ export class Disclosure extends React.Component {
     let percent = 0;
     let heading;
     let currentStep;
-    let projectNextDisabled;
+    let nextDisabled;
     const QUESTIONNAIRE_PERCENTAGE = 25;
     switch (currentDisclosureStep) {
       case COIConstants.DISCLOSURE_STEP.QUESTIONNAIRE:
@@ -209,13 +232,14 @@ export class Disclosure extends React.Component {
             instructionsShowing={this.state.applicationState.instructionsShowing}
           />
         );
+        nextDisabled = this.incompleteEntityExists(this.state.entities);
         heading = 'Financial Entities';
         break;
       case COIConstants.DISCLOSURE_STEP.PROJECTS:
         stepNumber = 2;
         const PROJECTS_PERCENTAGE = 75;
         percent = PROJECTS_PERCENTAGE;
-        let disclosureType = this.context.router.getCurrentQuery().type;
+        let disclosureType = this.props.location.query.type;
         if (disclosureType === COIConstants.DISCLOSURE_TYPE.MANUAL) {
           let disclosure = this.state.applicationState.currentDisclosureState.disclosure;
           currentStep = (
@@ -230,7 +254,7 @@ export class Disclosure extends React.Component {
             />
           );
           heading = 'Manual Event';
-          projectNextDisabled = this.undefinedManualRelationExists(
+          nextDisabled = this.undefinedManualRelationExists(
             this.state.entities,
             disclosure,
             this.state.declarations
@@ -250,7 +274,7 @@ export class Disclosure extends React.Component {
             />
           );
           heading = 'Project Declarations';
-          projectNextDisabled = this.undefinedProjectRelationExists(
+          nextDisabled = this.undefinedProjectRelationExists(
             this.state.entities,
             this.state.projects,
             this.state.declarations
@@ -275,34 +299,33 @@ export class Disclosure extends React.Component {
     let submitDisabled = window.config.general.certificationOptions.required ? !this.state.applicationState.currentDisclosureState.isCertified : false;
 
     return (
-      <div className="flexbox row fill" style={merge(styles.container, this.props.style)}>
-        <Sidebar
-          style={styles.sidebar}
-          steps={this.steps}
-          activestep={stepNumber}
-          visitedSteps={this.state.applicationState.currentDisclosureState.visitedSteps}
-        />
-
-        <span className="fill" style={styles.content}>
-          <DisclosureHeader>{heading}</DisclosureHeader>
-
-          <span style={styles.middle}>
-            {currentStep}
-          </span>
-
-          <NavSidebar
-            percent={percent}
-            step={currentDisclosureStep}
-            question={currentQuestion}
-            submitDisabled={submitDisabled}
-            nextDisabled={projectNextDisabled}
+      <div className="flexbox column" style={{height: '100%'}}>
+        <AppHeader style={styles.header} />
+        <div className="flexbox row fill" style={merge(styles.container, this.props.style)}>
+          <Sidebar
+            style={styles.sidebar}
+            steps={this.steps}
+            activestep={stepNumber}
+            visitedSteps={this.state.applicationState.currentDisclosureState.visitedSteps}
           />
-        </span>
+
+          <span className="fill" style={styles.content}>
+            <DisclosureHeader>{heading}</DisclosureHeader>
+
+            <span style={styles.middle}>
+              {currentStep}
+            </span>
+
+            <NavSidebar
+              percent={percent}
+              step={currentDisclosureStep}
+              question={currentQuestion}
+              submitDisabled={submitDisabled}
+              nextDisabled={nextDisabled}
+            />
+          </span>
+        </div>
       </div>
     );
   }
 }
-
-Disclosure.contextTypes = {
-  router: React.PropTypes.func
-};

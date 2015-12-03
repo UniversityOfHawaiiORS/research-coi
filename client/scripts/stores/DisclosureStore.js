@@ -22,6 +22,7 @@ import alt from '../alt';
 import {COIConstants} from '../../../COIConstants';
 import {processResponse, createRequest} from '../HttpUtils';
 import ConfigActions from '../actions/ConfigActions';
+import history from '../history';
 
 let cloneObject = original => {
   return JSON.parse(JSON.stringify(original));
@@ -784,6 +785,7 @@ class _DisclosureStore extends AutoBindingStore {
     if (!this.applicationState.entityStates[id]) {
       this.applicationState.entityStates[id] = {};
     }
+
     this.applicationState.entityStates[id].editing = true;
     this.applicationState.entityStates[id].snapshot = cloneObject(this.getEntity(id));
   }
@@ -1270,8 +1272,9 @@ class _DisclosureStore extends AutoBindingStore {
     .end(processResponse(err => {
       if (!err) {
         this.resetDisclosure();
-        window.location = '#/dashboard';
         this.toggleConfirmationMessage();
+        // this.emitChange();
+        history.replaceState(null, '/coi/dashboard');
       }
     }));
   }

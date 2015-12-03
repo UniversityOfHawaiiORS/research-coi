@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../../merge';
 import Sidebar from '../Sidebar';
 import ActionPanel from '../ActionPanel';
@@ -24,6 +24,7 @@ import InstructionEditor from '../InstructionEditor';
 import ConfigStore from '../../../stores/ConfigStore';
 import QuestionnaireConfig from '../QuestionnaireConfig';
 import {COIConstants} from '../../../../../COIConstants';
+import {AppHeader} from '../../AppHeader';
 
 export default class Questionnaire extends React.Component {
   constructor() {
@@ -58,6 +59,11 @@ export default class Questionnaire extends React.Component {
         overflowY: 'auto',
         minHeight: 0
       },
+      header: {
+        boxShadow: '0 1px 6px #D1D1D1',
+        zIndex: 10,
+        position: 'relative'
+      },
       content: {
         backgroundColor: '#F2F2F2',
         boxShadow: '2px 8px 8px #ccc inset',
@@ -71,7 +77,7 @@ export default class Questionnaire extends React.Component {
         color: '#525252',
         fontWeight: 300,
         backgroundColor: 'white',
-        minHeight: 68
+        minHeight: 70
       },
       configurationArea: {
         padding: 35,
@@ -104,18 +110,21 @@ export default class Questionnaire extends React.Component {
     }
 
     return (
-      <span className="fill flexbox row" style={merge(styles.container, this.props.style)}>
-        <Sidebar active="questionnaire" />
-        <span style={styles.content} className="inline-flexbox column fill">
-          <div style={styles.stepTitle}>
-            Customize Questionnaire
-          </div>
-          <div className="fill flexbox row" style={styles.configurationArea}>
-            {configSection}
-            <ActionPanel visible={this.state.dirty} />
-          </div>
+      <div className="flexbox column" style={{height: '100%'}}>
+        <AppHeader style={styles.header} />
+        <span className="fill flexbox row" style={merge(styles.container, this.props.style)}>
+          <Sidebar active="questionnaire" />
+          <span style={styles.content} className="inline-flexbox column fill">
+            <div style={styles.stepTitle}>
+              Customize Questionnaire
+            </div>
+            <div className="fill flexbox row" style={styles.configurationArea}>
+              {configSection}
+              <ActionPanel visible={this.state.dirty} />
+            </div>
+          </span>
         </span>
-      </span>
+      </div>
     );
   }
 }

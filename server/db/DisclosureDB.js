@@ -527,84 +527,84 @@ export let get = (dbInfo, userInfo, disclosureId) => {
       }),
     isDisclosureUsers(dbInfo, disclosureId, userInfo.schoolId)
   ]).then(([
-      disclosureRecords,
-      entityRecords,
-      answerRecords,
-      declarationRecords,
-      commentRecords,
-      fileRecords,
-      managementPlans,
-      isOwner
-    ]) => {
-      if (userInfo.coiRole !== COIConstants.ROLES.ADMIN) {
-        if (!isOwner) {
-          throw Error(`Attempt by ${userInfo.username} to load disclosure ${disclosureId} which is not theirs`);
-        }
+    disclosureRecords,
+    entityRecords,
+    answerRecords,
+    declarationRecords,
+    commentRecords,
+    fileRecords,
+    managementPlans,
+    isOwner
+  ]) => {
+    if (userInfo.coiRole !== COIConstants.ROLES.ADMIN) {
+      if (!isOwner) {
+        throw Error(`Attempt by ${userInfo.username} to load disclosure ${disclosureId} which is not theirs`);
       }
+    }
 
-      disclosure = disclosureRecords[0];
-      disclosure.entities = entityRecords;
-      disclosure.answers = answerRecords;
-      disclosure.declarations = declarationRecords;
-      disclosure.comments = commentRecords;
-      disclosure.files = fileRecords;
-      disclosure.managementPlan = managementPlans;
-      disclosure.answers.forEach(answer =>{
-        answer.answer = JSON.parse(answer.answer);
-      });
+    disclosure = disclosureRecords[0];
+    disclosure.entities = entityRecords;
+    disclosure.answers = answerRecords;
+    disclosure.declarations = declarationRecords;
+    disclosure.comments = commentRecords;
+    disclosure.files = fileRecords;
+    disclosure.managementPlan = managementPlans;
+    disclosure.answers.forEach(answer =>{
+      answer.answer = JSON.parse(answer.answer);
+    });
 
-      return Promise.all([
-        knex.select('r.id', 'r.fin_entity_id as finEntityId', 'r.relationship_cd as relationshipCd', 'r.person_cd as personCd', 'r.type_cd as typeCd', 'r.amount_cd as amountCd', 'r.comments')
-          .from('relationship as r')
-          .whereIn('fin_entity_id', disclosure.entities.map(entity => { return entity.id; }))
-          .andWhereNot('status', COIConstants.RELATIONSHIP_STATUS.PENDING)
-          .then(relationships => {
-            return knex('travel_relationship')
-              .select('amount', 'destination', 'start_date as startDate', 'end_date as endDate', 'reason', 'relationship_id as relationshipId')
-              .whereIn('relationship_id', relationships.map(relationship => { return relationship.id; }))
-              .then(travels=> {
-                disclosure.entities.forEach(entity => {
-                  entity.relationships = relationships.filter(relationship => {
-                    return relationship.finEntityId === entity.id;
-                  }).map(relationship=> {
-                    let travel = travels.find(item => {
-                      return item.relationshipId === relationship.id;
-                    });
-                    relationship.travel = travel ? travel : {};
-                    return relationship;
+    return Promise.all([
+      knex.select('r.id', 'r.fin_entity_id as finEntityId', 'r.relationship_cd as relationshipCd', 'r.person_cd as personCd', 'r.type_cd as typeCd', 'r.amount_cd as amountCd', 'r.comments')
+        .from('relationship as r')
+        .whereIn('fin_entity_id', disclosure.entities.map(entity => { return entity.id; }))
+        .andWhereNot('status', COIConstants.RELATIONSHIP_STATUS.PENDING)
+        .then(relationships => {
+          return knex('travel_relationship')
+            .select('amount', 'destination', 'start_date as startDate', 'end_date as endDate', 'reason', 'relationship_id as relationshipId')
+            .whereIn('relationship_id', relationships.map(relationship => { return relationship.id; }))
+            .then(travels=> {
+              disclosure.entities.forEach(entity => {
+                entity.relationships = relationships.filter(relationship => {
+                  return relationship.finEntityId === entity.id;
+                }).map(relationship=> {
+                  let travel = travels.find(item => {
+                    return item.relationshipId === relationship.id;
                   });
+                  relationship.travel = travel ? travel : {};
+                  return relationship;
                 });
               });
-          }),
-        knex.select('qa.question_id as questionId', 'qa.answer as answer', 'fea.fin_entity_id as finEntityId')
-          .from('questionnaire_answer as qa' )
-          .innerJoin('fin_entity_answer as fea', 'fea.questionnaire_answer_id', 'qa.id')
-          .whereIn('fea.fin_entity_id', disclosure.entities.map(entity => { return entity.id; }))
-          .then(answers=>{
-            disclosure.entities.forEach(entity => {
-              entity.answers = answers.filter(answer => {
-                return answer.finEntityId === entity.id;
-              }).map(answer=>{
-                answer.answer = JSON.parse(answer.answer);
-                return answer;
-              });
             });
-          }),
-        knex.select('*')
-          .from('file')
-          .whereIn('ref_id', disclosure.entities.map(entity => { return entity.id; }))
-          .andWhere('file_type', COIConstants.FILE_TYPE.FINANCIAL_ENTITY)
-          .then(files=>{
-            disclosure.entities.forEach(entity => {
-              entity.files = files.filter(file => {
-                return file.ref_id === entity.id;
-              });
+        }),
+      knex.select('qa.question_id as questionId', 'qa.answer as answer', 'fea.fin_entity_id as finEntityId')
+        .from('questionnaire_answer as qa' )
+        .innerJoin('fin_entity_answer as fea', 'fea.questionnaire_answer_id', 'qa.id')
+        .whereIn('fea.fin_entity_id', disclosure.entities.map(entity => { return entity.id; }))
+        .then(answers=>{
+          disclosure.entities.forEach(entity => {
+            entity.answers = answers.filter(answer => {
+              return answer.finEntityId === entity.id;
+            }).map(answer=>{
+              answer.answer = JSON.parse(answer.answer);
+              return answer;
             });
-          })
-      ]).then(()=>{
-        return disclosure;
-      });
+          });
+        }),
+      knex.select('*')
+        .from('file')
+        .whereIn('ref_id', disclosure.entities.map(entity => { return entity.id; }))
+        .andWhere('file_type', COIConstants.FILE_TYPE.FINANCIAL_ENTITY)
+        .then(files=>{
+          disclosure.entities.forEach(entity => {
+            entity.files = files.filter(file => {
+              return file.ref_id === entity.id;
+            });
+          });
+        })
+    ]).then(()=>{
+      return disclosure;
     });
+  });
 };
 
 export let getAnnualDisclosure = (dbInfo, userInfo, piName) => {
@@ -823,17 +823,17 @@ export let submit = (dbInfo, userInfo, disclosureId) => {
     });
 };
 
-export let getExpirationDate = (approvedDate, isRolling, dueDate) => {
+export let getExpirationDate = (date, isRolling, dueDate) => {
   if (isRolling === true) {
-    return new Date(approvedDate.setFullYear(approvedDate.getFullYear() + 1));
+    return new Date(date.setFullYear(date.getFullYear() + 1));
   } else {
     let dueMonthDay = dueDate.getMonth() + dueDate.getDay();
-    let approveMonthDay = approvedDate.getMonth() + approvedDate.getDay();
+    let approveMonthDay = date.getMonth() + date.getDay();
 
     if (approveMonthDay < dueMonthDay) {
-      return new Date(dueDate.setFullYear(approvedDate.getFullYear()));
+      return new Date(dueDate.setFullYear(date.getFullYear()));
     } else {
-      return new Date(dueDate.setFullYear(approvedDate.getFullYear() + 1));
+      return new Date(dueDate.setFullYear(date.getFullYear() + 1));
     }
   }
 };
@@ -899,8 +899,7 @@ export let approve = (dbInfo, disclosure, displayName, disclosureId) => {
   ])
   .then(([config]) => {
     let generalConfig = JSON.parse(config[0].config).general;
-    let approvedDate = new Date();
-    let expiredDate = getExpirationDate(approvedDate, generalConfig.isRollingDueDate, new Date(generalConfig.dueDate));
+    let expiredDate = getExpirationDate(new Date(disclosure.submittedDate), generalConfig.isRollingDueDate, new Date(generalConfig.dueDate));
     return approveDisclosure(knex, disclosureId, expiredDate);
   });
 };

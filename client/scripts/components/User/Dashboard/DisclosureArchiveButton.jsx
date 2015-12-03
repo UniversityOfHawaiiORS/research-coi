@@ -16,12 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {ResponsiveComponent} from '../../ResponsiveComponent';
 import {merge} from '../../../merge';
-import Router from 'react-router';
-let Link = Router.Link;
-import {RefreshIcon} from '../../DynamicIcons/RefreshIcon';
+import {Link} from 'react-router';
 
 export class DisclosureArchiveButton extends ResponsiveComponent {
   constructor() {
@@ -54,9 +52,8 @@ export class DisclosureArchiveButton extends ResponsiveComponent {
     let styles = merge(this.commonStyles, mobileStyles);
 
     return (
-      <Link to="archiveview" query={{type: this.props.type}} style={merge(styles.container, this.props.style)}>
+      <Link to={"/coi/archiveview"} query={{type: this.props.type}} style={merge(styles.container, this.props.style)}>
         <div>
-          <RefreshIcon style={styles.icon} />
           <div>Disclosure</div>
           <div>Archive</div>
         </div>
@@ -88,7 +85,7 @@ export class DisclosureArchiveButton extends ResponsiveComponent {
     let styles = merge(this.commonStyles, desktopStyles);
 
     return (
-      <Link to="archiveview" query={{type: this.props.type}} style={merge(styles.container, this.props.style)}>
+      <Link to={"/coi/archiveview"} query={{type: this.props.type}} style={merge(styles.container, this.props.style)}>
         <div>
           <div style={styles.primary}>View</div>
           <div style={styles.secondary}>Disclosure Archives</div>

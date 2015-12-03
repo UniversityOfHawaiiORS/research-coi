@@ -16,9 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {merge} from '../../merge';
 import {SidebarStep} from './SidebarStep';
+import BackToDashboard from './BackToDashboard';
 
 export class Sidebar extends React.Component {
   constructor(props) {
@@ -84,7 +85,7 @@ export class Sidebar extends React.Component {
         backgroundColor: '#eeeeee'
       },
       ul: {
-        marginTop: 130,
+        marginTop: 47,
         listStyleType: 'none',
         padding: 0,
         backgroundColor: '#eeeeee'
@@ -123,6 +124,7 @@ export class Sidebar extends React.Component {
     return (
       <span style={merge(styles.container, this.props.style)}>
         <div className="fill">
+          <BackToDashboard />
           <ul style={styles.ul}>
             {steps}
           </ul>

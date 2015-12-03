@@ -16,7 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react'; //eslint-disable-line no-unused-vars
 import {merge} from '../../merge';
 import {DatePicker} from '../DatePicker';
 
@@ -49,12 +49,11 @@ export default class TextField extends React.Component {
   render() {
     let styles = {
       date: {
-        width: '45%',
+        width: 120,
         display: 'inline-block'
       },
       dateMiddle: {
-        width: '10%',
-        display: 'inline-block'
+        marginRight: 8
       }
     };
 
@@ -65,7 +64,7 @@ export default class TextField extends React.Component {
         <label htmlFor={this.props.id} style={this.getLabelStyle(invalid, this.props.styles.label)}>{this.props.label}</label>
         <div id={this.props.id} style={{width: '98%'}}>
           <DatePicker id="startDate" onChange={this.onStartDateChange} value={this.props.startDate} style={styles.date} textFieldStyle={this.getInputStyle(this.props.startDateInvalid, this.props.styles.input)}/>
-          <div style={styles.dateMiddle}>TO</div>
+          <span style={styles.dateMiddle}>TO</span>
           <DatePicker id="endDate" onChange={this.onEndDateChange} value={this.props.endDate} style={styles.date} textFieldStyle={this.getInputStyle(this.props.endDateInvalid, this.props.styles.input)}/>
         </div>
       </div>

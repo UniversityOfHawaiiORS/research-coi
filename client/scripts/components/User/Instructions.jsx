@@ -1,3 +1,4 @@
+/* @flow */
 /*
     The Conflict of Interest (COI) module of Kuali Research
     Copyright © 2015 Kuali, Inc.
@@ -16,94 +17,50 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
-import {ResponsiveComponent} from '../ResponsiveComponent';
+import React from 'react';
 import {merge} from '../../merge';
 import {DisclosureActions} from '../../actions/DisclosureActions';
 import {GreyButton} from '../GreyButton';
+import VerticalSlider from '../VerticalSlider';
 
-export class Instructions extends ResponsiveComponent {
-  constructor() {
-    super();
-    this.commonStyles = {};
-
-    this.close = this.close.bind(this);
-  }
-
-  componentWillMount() {
-    this.setState({
-      visible: !this.props.collapsed
-    });
-  }
-
-  close() {
-    DisclosureActions.toggleInstructions();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.collapsed && !this.props.collapsed) {
-      setTimeout(() => {
-        this.setState({
-          visible: false
-        });
-      }, 300);
+export function Instructions(props: Object): React.Element {
+  let styles = {
+    container: {
+      color: 'white',
+      whiteSpace: 'normal',
+      backgroundColor: window.colorBlindModeOn ? 'black' : '#0095A0',
+      padding: '47px 25px 31px 53px'
+    },
+    buttons: {
+      textAlign: 'right',
+      padding: '14px 14px 0 0'
+    },
+    closeButton: {
+      padding: '3px 16px',
+      fontSize: 15,
+      marginRight: 23
+    },
+    arrow: {
+      position: 'absolute',
+      width: 0,
+      height: 0,
+      border: '25px solid transparent',
+      borderTopColor: 'white',
+      top: 0,
+      right: 25,
+      zIndex: 11
     }
-    else if (!nextProps.collapsed && this.props.collapsed) {
-      this.setState({
-        visible: true
-      });
+  };
 
-      nextProps.collapsed = true;
-
-      setTimeout(() => {
-        this.props.collapsed = false;
-        this.forceUpdate();
-      }, 20);
-    }
-  }
-
-  renderDesktop() {
-    let desktopStyles = {
-      container: {
-        display: this.state.visible ? 'block' : 'none',
-        color: 'white',
-        whiteSpace: 'normal',
-        backgroundColor: window.colorBlindModeOn ? 'black' : '#0095A0',
-        padding: '47px 25px 31px 53px',
-        transition: 'transform .2s ease-out',
-        transform: this.props.collapsed ? 'translateY(-100%)' : 'translateY(0%)'
-      },
-      buttons: {
-        textAlign: 'right',
-        padding: '14px 14px 0 0'
-      },
-      closeButton: {
-        padding: '3px 16px',
-        fontSize: 15,
-        marginRight: 23
-      },
-      arrow: {
-        position: 'absolute',
-        width: 0,
-        height: 0,
-        border: '25px solid transparent',
-        borderTopColor: 'white',
-        top: 0,
-        right: 25,
-        zIndex: 11
-      }
-    };
-
-    let styles = merge(this.commonStyles, desktopStyles);
-
-    return (
-      <div style={merge(styles.container, this.props.style)}>
+  return (
+    <VerticalSlider collapsed={props.collapsed}>
+      <div style={merge(styles.container, props.style)}>
         <div style={styles.arrow}></div>
-        <div>{this.props.text}</div>
+        <div>{props.text}</div>
         <div style={styles.buttons}>
-          <GreyButton style={styles.closeButton} onClick={this.close}>CLOSE</GreyButton>
+          <GreyButton style={styles.closeButton} onClick={DisclosureActions.toggleInstructions}>CLOSE</GreyButton>
         </div>
       </div>
-    );
-  }
+    </VerticalSlider>
+  );
 }

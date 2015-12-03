@@ -16,14 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons'; //eslint-disable-line no-unused-vars
+import React from 'react';
 import {merge} from '../../../merge';
 import {DisclosureListItem} from './DisclosureListItem';
 import {DisclosureFilterSearch} from '../DisclosureFilterSearch';
-import {SearchFilterGroup} from '../SearchFilterGroup';
+import SearchFilterGroup from '../SearchFilterGroup';
 import {AdminActions} from '../../../actions/AdminActions';
 import {BlueButton} from '../../BlueButton';
 import ConfigStore from '../../../stores/ConfigStore';
+import AdminMenu from '../../AdminMenu';
 
 export class DisclosureList extends React.Component {
   constructor() {
@@ -31,7 +32,7 @@ export class DisclosureList extends React.Component {
   }
 
   componentDidMount() {
-    let theList = React.findDOMNode(this.refs.theList);
+    let theList = this.refs.theList;
     let enabled = true;
     theList.addEventListener('scroll', () => {
       if (enabled) {
@@ -49,20 +50,8 @@ export class DisclosureList extends React.Component {
     });
   }
 
-  loadMore() {
-    AdminActions.loadMore();
-  }
-
-  doSearch() {
-    AdminActions.doSearch();
-  }
-
   changeSearch(newSearch) {
     AdminActions.changeSearch(newSearch);
-  }
-
-  toggleFilters() {
-    AdminActions.toggleFilters();
   }
 
   render() {
@@ -138,7 +127,7 @@ export class DisclosureList extends React.Component {
     if (!this.props.loadedAll && !this.props.loadingMore) {
       loadMoreButton = (
         <div style={styles.loadMoreButton}>
-          <BlueButton onClick={this.loadMore}>Load more</BlueButton>
+          <BlueButton onClick={AdminActions.loadMore}>Load more</BlueButton>
         </div>
       );
     }
@@ -169,13 +158,14 @@ export class DisclosureList extends React.Component {
 
     return (
       <div className="flexbox column" style={merge(styles.container, this.props.style)}>
+        <AdminMenu style={{padding: '32px 0px'}} />
         <div style={{width: 320}}>
           <DisclosureFilterSearch
             query={this.props.filters.search}
             onChange={this.changeSearch}
-            onSearch={this.doSearch}
+            onSearch={AdminActions.doSearch}
           />
-          <div style={styles.heading} onClick={this.toggleFilters}>
+          <div style={styles.heading} onClick={AdminActions.toggleFilters}>
             <span style={{paddingRight: 3}}>
               {this.props.count}
             </span>

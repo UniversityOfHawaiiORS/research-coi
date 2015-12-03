@@ -1,3 +1,4 @@
+/* @flow */
 /*
     The Conflict of Interest (COI) module of Kuali Research
     Copyright © 2015 Kuali, Inc.
@@ -16,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import React from 'react/addons';
+import React from 'react';
 import {merge} from '../../../merge';
 import CommentBubble from './CommentBubble';
 import {AdminActions} from '../../../actions/AdminActions';
@@ -29,15 +30,11 @@ export default class CommentingPanel extends React.Component {
     this.makeComment = this.makeComment.bind(this);
   }
 
-  done() {
-    AdminActions.hideCommentingPanel();
-  }
-
   makeComment() {
-    let piCheck = React.findDOMNode(this.refs.piCheck);
+    let piCheck = this.refs.piCheck;
     let visibleToPI = piCheck.checked;
     piCheck.checked = false;
-    let textarea = React.findDOMNode(this.refs.commentText);
+    let textarea = this.refs.commentText;
     let commentText = textarea.value;
     textarea.value = '';
 
@@ -52,7 +49,7 @@ export default class CommentingPanel extends React.Component {
 
   }
 
-  render() {
+  render(): React.Element {
     let styles = {
       container: {
         backgroundColor: 'white',
@@ -176,7 +173,7 @@ export default class CommentingPanel extends React.Component {
     return (
       <div className="flexbox column" style={merge(styles.container, this.props.style)}>
         <div style={styles.heading}>
-          <span style={styles.close} onClick={this.done}>
+          <span style={styles.close} onClick={AdminActions.hideCommentingPanel}>
             <i className="fa fa-times" style={{fontSize: 23}}></i> CLOSE
           </span>
           <span style={styles.topic}>{this.props.topic}</span>

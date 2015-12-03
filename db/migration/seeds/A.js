@@ -16,7 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-/*eslint-disable camelcase */
+/*eslint-disable camelcase, no-console */
+
+var hashCode = require('../../../hash');
+
+var includeDemoData = process.argv[8] === 'demo';
 
 function randomNumberBetween(lowest, highest) {
   return Math.floor(Math.random() * (highest - lowest + 1)) + lowest;
@@ -101,7 +105,7 @@ function getRandomFirstName() {
 }
 
 function insertDeclaration(knex, disclosureId, entityId, projectId) {
-  console.log('Inserting declaration for disclosure ' + disclosureId);
+  console.log('Demo data - Inserting declaration for disclosure ' + disclosureId);
   return Promise.all([
     knex('declaration').insert({
       disclosure_id: disclosureId,
@@ -114,7 +118,7 @@ function insertDeclaration(knex, disclosureId, entityId, projectId) {
 }
 
 function insertProject(knex, title) {
-  console.log('Inserting project ' + title);
+  console.log('Demo data - Inserting project ' + title);
   var startDate = new Date(new Date().getTime() - randomNumberBetween(1, 7606400000));
   var endDate = new Date(startDate.getTime() + 1000000000);
 
@@ -132,7 +136,7 @@ function insertProject(knex, title) {
 }
 
 function insertProjectPerson(knex, userId, role, projectId) {
-  console.log('Inserting project person for user ' + userId);
+  console.log('Demo data - Inserting project person for user ' + userId);
   return knex('project_person').insert({
     project_id: projectId,
     person_id: userId,
@@ -143,7 +147,7 @@ function insertProjectPerson(knex, userId, role, projectId) {
 }
 
 function insertRelationship(knex, entityId) {
-  console.log('Inserting relationship for entity ' + entityId);
+  console.log('Demo data - Inserting relationship for entity ' + entityId);
   var relationshipCd = randomNumberBetween(1, 5);
   return knex('relationship')
     .insert({
@@ -158,7 +162,7 @@ function insertRelationship(knex, entityId) {
 }
 
 function insertEntity(knex, disclosureId, name, description) {
-  console.log('Inserting entity for disclosure ' + disclosureId);
+  console.log('Demo data - Inserting entity for disclosure ' + disclosureId);
   return knex('fin_entity')
     .insert({
       disclosure_id: disclosureId,
@@ -179,7 +183,7 @@ function insertQuestionnaireSubquestion(knex, questionnaireId, parentId, numberT
     active: true,
     question: JSON.stringify({
       order: 1,
-      text: 'If Yes, did the organization send you on vacation?',
+      text: 'Please explain.',
       type: 'Text area',
       displayCriteria: 'Yes',
       numberToShow: numberToShow + '-A'
@@ -211,17 +215,6 @@ function insertQuestionnaireQuestion(knex, questionnaireId, text, numberToShow, 
   });
 }
 
-function hashCode(toHash){
-  var hash = 0;
-  if (toHash.length === 0) { return hash; }
-  for (var i = 0; i < toHash.length; i++) {
-    var char = toHash.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash;
-}
-
 var userNumber = 0;
 function getNextUserId() {
   userNumber++;
@@ -235,7 +228,7 @@ function insertDisclosure(knex) {
     revisedDate = new Date(submittedDate.getTime() + 259200000);
   }
   var userId = getNextUserId();
-  console.log('Inserting disclosure for user ' + userId);
+  console.log('Demo data - Inserting disclosure for user ' + userId);
 
   return knex('disclosure').insert({
     user_id: userId,
@@ -341,13 +334,13 @@ function insertInitialArchiveConfig(query) {
       dueDate: new Date(2015, 1, 1),
       isRollingDueDate: false,
       instructions: {
-        'Questionnaire': 'Questionnaire Instructions',
-        'Financial Entities': 'Financial Entities Instructions',
-        'Project Declaration': 'Project Declaration Instructions',
-        'Certification': 'Certification Instructions'
+        'Questionnaire': 'Please answer each question thoughtfully. You will have an opportunity to review and edit your answers after completing the questionnaire.',
+        'Financial Entities': 'Please enter all your financial entities and the associated data, which are required. Then indicate the nature of each your relationships with each financial entity.',
+        'Project Declaration': 'Select the appropriate project declaration for each of your financial entity-project relationships. You can use the "Set All" function to apply a declaration to all relationships at once.',
+        'Certification': 'You may add any overall attachments for your annual disclosure.  Then please certify and submit your disclosure for review.'
       },
       certificationOptions: {
-        text: 'Certification Text',
+        text: 'In accordance with the University\'s policy on Disclosure of Financial Interests and Management of Conflict of Interest Related to Sponsored Projects, the Principal Investigator and all other Investigators who share responsibility for the design, conduct, or reporting of sponsored projects must disclose their personal SIGNIFICANT FINANCIAL INTERESTS in any non-profit foundation or for-profit company that might benefit from the predictable results of those proposed projects.  In addition, when the work to be performed under the proposed research project and the results of the proposed research project would reasonably appear to affect the Investigator\'s SIGNIFICANT FINANCIAL INTEREST, the interest is regarded as being related to the proposed research project and must be reported.',
         required: true
       }
     };
@@ -417,66 +410,64 @@ exports.seed = function(knex, Promise) {
         .insert({type_cd: 1, description: 'Ownership', enabled: true, type_enabled: true, amount_enabled: true, destination_enabled: false, date_enabled: false, reason_enabled: false})
         .then(function(){
           return Promise.all([
-            knex('relationship_type').insert({relationship_cd: 1, description: 'Stock', active: true}),
-            knex('relationship_type').insert({relationship_cd: 1, description: 'Stock Options', active: true}),
-            knex('relationship_type').insert({relationship_cd: 1, description: 'Other Ownership', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 1, description: '$1 - $5,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 1, description: '$5,001 - $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 1, description: 'Over $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 1, description: 'Privately Held, no valuation', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 1, description: 'Does not apply', active: true})
+            knex('relationship_type').insert({relationship_cd: 1, description: 'Stock', active: true})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 1, description: 'Stock Options', active: true});})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 1, description: 'Other Ownership', active: true});}),
+            knex('relationship_amount_type').insert({relationship_cd: 1, description: '$1 - $5,000', active: true})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 1, description: '$5,001 - $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 1, description: 'Over $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 1, description: 'Privately Held, no valuation', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 1, description: 'Does not apply', active: true});})
           ]);
         }),
       knex('relationship_category_type')
         .insert({type_cd: 2, description: 'Offices/Positions', enabled: true, type_enabled: true, amount_enabled: true, destination_enabled: false, date_enabled: false, reason_enabled: false})
         .then(function() {
           return Promise.all([
-            knex('relationship_type').insert({relationship_cd: 2, description: 'Board Member', active: true}),
-            knex('relationship_type').insert({relationship_cd: 2, description: 'Partner', active: true}),
-            knex('relationship_type').insert({relationship_cd: 2, description: 'Other Managerial Positions', active: true}),
-            knex('relationship_type').insert({relationship_cd: 2, description: 'Founder', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 2, description: '$1 - $5,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 2, description: '$5,001 - $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 2, description: 'Over $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 2, description: 'Privately Held, no valuation', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 2, description: 'Does not apply', active: true})
+            knex('relationship_type').insert({relationship_cd: 2, description: 'Board Member', active: true})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 2, description: 'Partner', active: true});})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 2, description: 'Other Managerial Positions', active: true});})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 2, description: 'Founder', active: true});}),
+            knex('relationship_amount_type').insert({relationship_cd: 2, description: '$1 - $5,000', active: true})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 2, description: '$5,001 - $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 2, description: 'Over $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 2, description: 'Privately Held, no valuation', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 2, description: 'Does not apply', active: true});})
           ]);
         }),
       knex('relationship_category_type')
         .insert({type_cd: 3, description: 'Paid Activities', enabled: true, type_enabled: false, amount_enabled: true, destination_enabled: false, date_enabled: false, reason_enabled: false})
         .then(function() {
-          return Promise.all([
-            knex('relationship_amount_type').insert({relationship_cd: 3, description: '$1 - $5,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 3, description: '$5,001 - $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 3, description: 'Over $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 3, description: 'Privately Held, no valuation', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 3, description: 'Does not apply', active: true})
-          ]);
+          return knex('relationship_amount_type').insert({relationship_cd: 3, description: '$1 - $5,000', active: true})
+            .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 3, description: '$5,001 - $10,000', active: true});})
+            .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 3, description: 'Over $10,000', active: true});})
+            .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 3, description: 'Privately Held, no valuation', active: true});})
+            .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 3, description: 'Does not apply', active: true});});
         }),
       knex('relationship_category_type')
         .insert({type_cd: 4, description: 'Intellectual Property', enabled: true, type_enabled: true, amount_enabled: true, destination_enabled: false, date_enabled: false, reason_enabled: false})
         .then(function() {
           return Promise.all([
-            knex('relationship_type').insert({relationship_cd: 4, description: 'Royalty Income', active: true}),
-            knex('relationship_type').insert({relationship_cd: 4, description: 'Intellectual Property Rights', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 4, description: '$1 - $5,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 4, description: '$5,001 - $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 4, description: 'Over $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 4, description: 'Privately Held, no valuation', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 4, description: 'Does not apply', active: true})
+            knex('relationship_type').insert({relationship_cd: 4, description: 'Royalty Income', active: true})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 4, description: 'Intellectual Property Rights', active: true});}),
+            knex('relationship_amount_type').insert({relationship_cd: 4, description: '$1 - $5,000', active: true})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 4, description: '$5,001 - $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 4, description: 'Over $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 4, description: 'Privately Held, no valuation', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 4, description: 'Does not apply', active: true});})
           ]);
         }),
       knex('relationship_category_type')
         .insert({type_cd: 5, description: 'Other', enabled: true, type_enabled: true, amount_enabled: true, destination_enabled: false, date_enabled: false, reason_enabled: false})
         .then(function() {
           return Promise.all([
-            knex('relationship_type').insert({relationship_cd: 5, description: 'Contract', active: true}),
-            knex('relationship_type').insert({relationship_cd: 5, description: 'Other Transactions', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 5, description: '$1 - $5,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 5, description: '$5,001 - $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 5, description: 'Over $10,000', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 5, description: 'Privately Held, no valuation', active: true}),
-            knex('relationship_amount_type').insert({relationship_cd: 5, description: 'Does not apply', active: true})
+            knex('relationship_type').insert({relationship_cd: 5, description: 'Contract', active: true})
+              .then(function() {return knex('relationship_type').insert({relationship_cd: 5, description: 'Other Transactions', active: true});}),
+            knex('relationship_amount_type').insert({relationship_cd: 5, description: '$1 - $5,000', active: true})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 5, description: '$5,001 - $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 5, description: 'Over $10,000', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 5, description: 'Privately Held, no valuation', active: true});})
+              .then(function() {return knex('relationship_amount_type').insert({relationship_cd: 5, description: 'Does not apply', active: true});})
           ]);
         }),
       knex('relationship_category_type')
@@ -518,48 +509,73 @@ exports.seed = function(knex, Promise) {
     console.log('Seed - config');
     return insertInitialArchiveConfig(knex);
   }).then(function() {
-    console.log('Seed - disclosure');
+    if (!includeDemoData) {
+      return;
+    }
+    console.log('Demo data - disclosure');
     var disclosures = [];
     for (var i = 0; i < 10; i++) {
       disclosures.push(insertDisclosure(knex));
     }
-    return Promise.all(disclosures);
-  }).then(function() {
-    console.log('Seed - travel_relationship');
-    return Promise.all([
-      knex('travel_relationship').insert({
-        relationship_id: knex('relationship').min('id'),
-        amount: 1000.00,
-        destination: 'Hilo, HI',
-        start_date: new Date(2015, 4, 2),
-        end_date: new Date(2015, 4, 5),
-        reason: 'To give a talk on dark matter'
-      }),
-      knex('travel_relationship').insert({
-        relationship_id: knex('relationship').max('id'),
-        amount: 2000.00,
-        destination: 'Atlanta, GA',
-        start_date: new Date(2015, 4, 13),
-        end_date: new Date(2015, 4, 16),
-        reason: 'To give a talk on quasars'
-      }),
-      knex('travel_relationship').insert({
-        relationship_id: knex('relationship').max('id'),
-        amount: 3000.00,
-        destination: 'Atlanta, GA',
-        start_date: new Date(2015, 7, 1),
-        end_date: new Date(2015, 7, 3),
-        reason: 'To give a talk on string theory'
-      })
-    ]);
-  }).then(function() {
-    console.log('Seed - Lots of fake projects');
-    return Promise.all([
-      insertFakeProject(knex, 100000000008),
-      insertFakeProject(knex, 10000000005),
-      insertFakeProject(knex, 10000000007),
-      insertFakeProject(knex, 10000000030),
-      insertFakeProject(knex, 10000000002)
-    ]);
+    return Promise.all(disclosures).then(function() {
+      console.log('Demo data - travel_relationship');
+      return Promise.all([
+        knex('travel_relationship').insert({
+          relationship_id: knex('relationship').min('id'),
+          amount: 1000.00,
+          destination: 'Hilo, HI',
+          start_date: new Date(2015, 4, 2),
+          end_date: new Date(2015, 4, 5),
+          reason: 'To give a talk on dark matter'
+        }),
+        knex('travel_relationship').insert({
+          relationship_id: knex('relationship').max('id'),
+          amount: 2000.00,
+          destination: 'Atlanta, GA',
+          start_date: new Date(2015, 4, 13),
+          end_date: new Date(2015, 4, 16),
+          reason: 'To give a talk on quasars'
+        }),
+        knex('travel_relationship').insert({
+          relationship_id: knex('relationship').max('id'),
+          amount: 3000.00,
+          destination: 'Atlanta, GA',
+          start_date: new Date(2015, 7, 1),
+          end_date: new Date(2015, 7, 3),
+          reason: 'To give a talk on string theory'
+        })
+      ]).then(function() {
+        console.log('Demo data - Lots of fake projects');
+        return Promise.all([
+          insertFakeProject(knex, 100000000008),
+          insertFakeProject(knex, 10000000005),
+          insertFakeProject(knex, 10000000007),
+          insertFakeProject(knex, 10000000030),
+          insertFakeProject(knex, 10000000002)
+        ]);
+      }).then(function() {
+        console.log('Demo data - Archived config 1');
+        return insertInitialArchiveConfig(knex);
+      }).then(function() {
+        console.log('Demo data - Archived config 2');
+        return insertInitialArchiveConfig(knex);
+      }).then(function() {
+        console.log('Demo data - Archived disclosure 1');
+        return knex('disclosure_archive').insert({
+          disclosure_id: 1,
+          approved_by: 'Test Admin',
+          approved_date: new Date(),
+          disclosure: '{"id":11,"typeCd":2,"title":null,"dispositionTypeCd":null,"statusCd":3,"submittedBy":"User p999","submittedDate":"2015-11-27T05:05:29.000Z","revisedDate":null,"startDate":"2015-11-27T05:04:59.000Z","expiredDate":null,"lastReviewDate":"2015-11-27T05:05:58.950Z","configId":804,"entities":[{"id":31,"disclosureId":11,"active":1,"name":"hjkhjk","description":null,"answers":[{"questionId":7,"answer":{"value":"No"},"finEntityId":31},{"questionId":6,"answer":{"value":["County Government"]},"finEntityId":31},{"questionId":8,"answer":{"value":"Yes"},"finEntityId":31},{"questionId":9,"answer":{"value":"bnmb"},"finEntityId":31}],"files":[],"relationships":[{"id":31,"finEntityId":31,"relationshipCd":1,"personCd":2,"typeCd":5,"amountCd":11,"comments":"bnmbmn","travel":{}}]}],"answers":[{"id":1,"questionId":3,"answer":{"value":"No"}},{"id":2,"questionId":4,"answer":{"value":"No"}},{"id":3,"questionId":1,"answer":{"value":"No"}},{"id":4,"questionId":2,"answer":{"value":"No"}}],"declarations":[],"comments":[],"files":[],"managementPlan":[]}'
+        });
+      }).then(function() {
+        console.log('Demo data - Archived disclosure 2');
+        return knex('disclosure_archive').insert({
+          disclosure_id: 2,
+          approved_by: 'Test Admin',
+          approved_date: new Date(),
+          disclosure: '{"id":11,"typeCd":2,"title":null,"dispositionTypeCd":null,"statusCd":3,"submittedBy":"User p999","submittedDate":"2015-11-27T05:05:29.000Z","revisedDate":null,"startDate":"2015-11-27T05:04:59.000Z","expiredDate":null,"lastReviewDate":"2015-11-27T05:05:58.950Z","configId":804,"entities":[{"id":31,"disclosureId":11,"active":1,"name":"hjkhjk","description":null,"answers":[{"questionId":7,"answer":{"value":"No"},"finEntityId":31},{"questionId":6,"answer":{"value":["County Government"]},"finEntityId":31},{"questionId":8,"answer":{"value":"Yes"},"finEntityId":31},{"questionId":9,"answer":{"value":"bnmb"},"finEntityId":31}],"files":[],"relationships":[{"id":31,"finEntityId":31,"relationshipCd":1,"personCd":2,"typeCd":5,"amountCd":11,"comments":"bnmbmn","travel":{}}]}],"answers":[{"id":1,"questionId":3,"answer":{"value":"No"}},{"id":2,"questionId":4,"answer":{"value":"No"}},{"id":3,"questionId":1,"answer":{"value":"No"}},{"id":4,"questionId":2,"answer":{"value":"No"}}],"declarations":[],"comments":[],"files":[],"managementPlan":[]}'
+        });
+      });
+    });
   });
 };
