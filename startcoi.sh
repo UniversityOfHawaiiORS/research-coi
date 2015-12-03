@@ -20,7 +20,7 @@ export AUTHZ_HOST=kcdev.ors.hawaii.edu
 export AUTHZ_ADMIN_ROLE=KC-COIDISCLOSURE:COI%20Administrator
 
 # Run webpack to make sure the latest is packaged ?
-./node_modules/.bin/webpack
+# node run webpack
 
 #DB_NAME=kcdev node --debug-brk=51021 --nolazy server/bootstrap
 #node-debug server/bootstrap.js
