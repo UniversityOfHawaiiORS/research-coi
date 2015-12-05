@@ -1,0 +1,9 @@
+# rename this file to application.conf and alter as needed
+DB_HOST=localhost
+DB_PORT=1530
+DB_NAME=kcdev
+DB_USER={user}
+DB_PASSWORD={password}
+OCI_HOME=/opt/oracle/instantclient_11_2
+LOCAL_FILE_DESTINATION=~/coidemo/attachments
+AUTHZ_HOST=kcdev.ors.hawaii.edu
