@@ -23,29 +23,45 @@ import {isDisclosureUsers} from './CommonDB';
 
 let getKnex;
 try {
-  let extensions = require('research-extensions');
+  const extensions = require('research-extensions').default;
   getKnex = extensions.getKnex;
 }
 catch (err) {
-  getKnex = require('./ConnectionManager');
+  getKnex = require('./ConnectionManager').default;
 }
 
-export let getFile = (dbInfo, userInfo, id) => {
-  let knex = getKnex(dbInfo);
+export const getFile = (dbInfo, userInfo, id) => {
+  const knex = getKnex(dbInfo);
 
-  let criteria = {
-    'id': id
+  const criteria = {
+    id
   };
-
-  if (userInfo.coiRole !== COIConstants.ROLES.ADMIN) {
-    criteria.user_id = userInfo.schoolId;
+  const query = knex.select('name', 'key', 'file_type').from('file').where(criteria);
+  if (userInfo.coiRole === COIConstants.ROLES.ADMIN) {
+    return query;
   }
 
-  return knex.select('*').from('file').where(criteria);
+  return query.then(file => {
+    if (file[0] && file[0].file_type === COIConstants.FILE_TYPE.MANAGEMENT_PLAN) {
+      return knex.select('f.name', 'f.key')
+        .from('file as f')
+        .innerJoin('disclosure as d', 'd.id', 'f.ref_id')
+        .where(function() {
+          this.where({'f.user_id': userInfo.schoolId})
+            .orWhere({'d.user_id': userInfo.schoolId});
+        })
+        .andWhere({'f.id': id});
+    }
+    return query.andWhere({'user_id': userInfo.schoolId});
+  });
+
 };
 
-export let saveNewFiles = (dbInfo, body, files, userInfo) => {
-  if (body.type !== COIConstants.FILE_TYPE.DISCLOSURE && body.type !== COIConstants.FILE_TYPE.MANAGEMENT_PLAN && body.type !== COIConstants.FILE_TYPE.FINANCIAL_ENTITY) {
+export const saveNewFiles = (dbInfo, body, files, userInfo) => {
+  if (body.type !== COIConstants.FILE_TYPE.DISCLOSURE &&
+    body.type !== COIConstants.FILE_TYPE.MANAGEMENT_PLAN &&
+    body.type !== COIConstants.FILE_TYPE.FINANCIAL_ENTITY &&
+    body.type !== COIConstants.FILE_TYPE.ADMIN) {
     throw Error(`Attempt by ${userInfo.username} to upload an unknown file type`);
   }
 
@@ -55,11 +71,11 @@ export let saveNewFiles = (dbInfo, body, files, userInfo) => {
         throw Error(`Attempt by ${userInfo.username} to upload a file for disclosure ${body.disclosureId} which isnt theirs`);
       }
 
-      let knex = getKnex(dbInfo);
-      let fileData = [];
+      const knex = getKnex(dbInfo);
+      const fileData = [];
       return Promise.all(
-        files.map(file=>{
-          let fileDatum = {
+        files.map(file => {
+          const fileDatum = {
             file_type: body.type,
             ref_id: body.refId,
             type: file.mimetype,
@@ -82,10 +98,10 @@ export let saveNewFiles = (dbInfo, body, files, userInfo) => {
     });
 };
 
-export let deleteFiles = (dbInfo, userInfo, file, fileId) => {
-  let knex = getKnex(dbInfo);
+export const deleteFiles = (dbInfo, userInfo, fileId) => {
+  const knex = getKnex(dbInfo);
 
-  let criteria = {
+  const criteria = {
     'id': fileId
   };
 
@@ -94,17 +110,22 @@ export let deleteFiles = (dbInfo, userInfo, file, fileId) => {
   }
 
   return knex('file')
-    .del()
+    .select('key')
     .where(criteria)
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        FileService.deleteFile(file.key, err => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
+    .then((file) => {
+      return knex('file')
+        .del()
+        .where(criteria)
+        .then(() => {
+          return new Promise((resolve, reject) => {
+            FileService.deleteFile(file[0].key, err => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
+            });
+          });
         });
-      });
     });
 };

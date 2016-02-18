@@ -16,7 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-import React from 'react'; //eslint-disable-line no-unused-vars
+import React from 'react';
 import assert from 'assert';
 import sd from 'skin-deep';
 import DeclarationSection from '../../../../../../client/scripts/components/User/Revise/DeclarationSection';
@@ -27,9 +27,9 @@ import DeclarationSection from '../../../../../../client/scripts/components/User
 describe('DeclarationSection', () => {
   it('render colorblind mode off', () => {
     const tree = sd.shallowRender(
-    <DeclarationSection
-      declarationsToReview={[{id:1}]}
-    />
+      <DeclarationSection
+        declarationsToReview={[{id:1}]}
+      />
     );
 
     const vdom = tree.getRenderOutput();
@@ -39,9 +39,9 @@ describe('DeclarationSection', () => {
   it('render colorblind mode on', () => {
     global.window.colorBlindModeOn = true;
     const tree = sd.shallowRender(
-    <DeclarationSection
-      declarationsToReview={[{id:1}]}
-    />
+      <DeclarationSection
+        declarationsToReview={[{id:1}]}
+      />
     );
     global.window.colorBlindModeOn = false;
     const vdom = tree.getRenderOutput();

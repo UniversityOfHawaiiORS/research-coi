@@ -15,17 +15,16 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
-
-import * as authClient from './authClient';
-import * as mockAuthClient from './mockAuthClient';
-
 let client;
-
 try {
-  let extensions = require('research-extensions'); // eslint-disable-line no-unused-vars
-  client = authClient;
+  const extensions = require('research-extensions').default; // eslint-disable-line no-unused-vars
+  if (process.env.NODE_ENV === 'test') {
+    client = require('./mockAuthClient');
+  } else {
+    client = require('./authClient');
+  }
 } catch (e) {
-  client = process.env.AUTH_ENABLED && process.env.AUTH_ENABLED === 'true' ? authClient : mockAuthClient;
+  client = process.env.AUTH_ENABLED && process.env.AUTH_ENABLED === 'true' ? require('./authClient') : require('./mockAuthClient');
 }
 
 

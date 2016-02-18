@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-export let COIConstants = {
+export const COIConstants = {
   DISCLOSURE_STEP: {
     QUESTIONNAIRE: 'Questionnaire',
     QUESTIONNAIRE_SUMMARY: 'questionnairesummary',
@@ -42,7 +42,8 @@ export let COIConstants = {
   FILE_TYPE: {
     FINANCIAL_ENTITY: 'financialEntity',
     DISCLOSURE: 'disclosure',
-    MANAGEMENT_PLAN: 'managementPlan'
+    MANAGEMENT_PLAN: 'managementPlan',
+    ADMIN: 'admin'
   },
   DISCLOSURE_TYPE: {
     MANUAL: '1',
@@ -96,5 +97,10 @@ export let COIConstants = {
     INFO: 0,
     WARN: 1,
     ERROR: 2
-  }
+  },
+  STATE_TYPE: {
+    ANNUAL_DISCLOSURE_STATE: 'annual_disclosure_state'
+  },
+  SYSTEM_USER: 'system'
+
 };

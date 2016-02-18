@@ -18,13 +18,35 @@
 
 import * as ConfigDB from '../db/ConfigDB';
 import {COIConstants} from '../../COIConstants';
+import {FORBIDDEN} from '../../HTTPStatusCodes';
 import Log from '../Log';
+import wrapAsync from './wrapAsync';
 
-export let init = app => {
+export async function saveConfig(req, res, next) {
+  try {
+    if (req.userInfo.coiRole !== COIConstants.ROLES.ADMIN) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    await ConfigDB.setConfig(req.dbInfo, req.userInfo.schoolId, req.body);
+    const config = await ConfigDB.getConfig(req.dbInfo, req.userInfo.schoolId);
+    config.general = req.body.general;
+    await ConfigDB.archiveConfig(req.dbInfo, req.userInfo.schoolId, req.userInfo.username, config);
+
+    res.send(config);
+  }
+  catch(err) {
+    Log.error(err);
+    next(err);
+  }
+}
+
+export const init = app => {
   /**
     @Role: any
   */
-  app.get('/api/coi/config', function(req, res, next) {
+  app.get('/api/coi/config', (req, res, next) => {
     ConfigDB.getConfig(req.dbInfo, req.userInfo.schoolId)
       .then(config => {
         res.send(config);
@@ -38,7 +60,7 @@ export let init = app => {
   /**
     @Role: any
    */
-  app.get('/api/coi/archived-config/:id', function(req, res, next) {
+  app.get('/api/coi/archived-config/:id', (req, res, next) => {
     ConfigDB.getArchivedConfig(req.dbInfo, req.params.id)
     .then((result) => {
       res.send(JSON.parse(result[0].config));
@@ -52,30 +74,5 @@ export let init = app => {
   /**
     @Role: admin
   */
-  app.post('/api/coi/config/', function(req, res, next){
-    if (req.userInfo.coiRole !== COIConstants.ROLES.ADMIN) {
-      res.sendStatus(403);
-      return;
-    }
-
-    ConfigDB.setConfig(req.dbInfo, req.userInfo.schoolId, req.body)
-      .then(() => {
-        return ConfigDB.getConfig(req.dbInfo, req.userInfo.schoolId)
-          .then(config => {
-            config.general = req.body.general;
-            return ConfigDB.archiveConfig(req.dbInfo, config)
-              .then(() => {
-                res.send(config);
-              })
-              .catch(err => {
-                Log.error(err);
-                next(err);
-              });
-          });
-      })
-      .catch(err => {
-        Log.error(err);
-        next(err);
-      });
-  });
+  app.post('/api/coi/config/', wrapAsync(saveConfig));
 };

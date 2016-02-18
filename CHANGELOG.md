@@ -1,4 +1,36 @@
-V1.0.2
+##coi-1601
+* Now tracks the user id, user name, and time of change when a config modification is made.  DB MIGRATION REQUIRED!
+* Instruction box now spans full width of the pane.
+* Can now configure whether instructions show by default.  (Turned on initially)
+* Improved printing of archived disclosures.
+* Fixed bug which prevented two new relations to simultaneusly added to different entities.
+* Fixed validation of new entity relationships.  Previously it was possible to 
+  submit an entity without a comment.
+* Changed wording of "Clear Filter" button on the admin list view filter by
+  status to 'Reset Filter'
+* Added ability to view management plans on archived disclosures
+* Fixed Travel Log view by filter to display correctly when 'Not Yet Disclosed'
+  is selected.
+* Added ability for admins to add attachments to a disclosure being reviewed.
+* Added ability to auto approve disclosures with out financial entities.  Can turn on/off
+  in the configuration (Turned off initially).
+
+##coi-1512
+* Fixed an issue when running the mock auth client that used the incorrect host 
+  in some situations. Fixed by no longer including protocol of host on the
+  redirect url. [View Commit](../../commit/54e2d57a70bc78bfb4c8bd92f220063ac347f11f)
+* Progress through a disclosure is now tracked.
+  If a user gets halfway through and stops, when they return
+  they will be brought back to where they were. The data has always been
+  saved. This will simply return them to that place in the process.  [View Commit](../../commit/1c77869fb8cb7905f1c438d9ecdb26d429aa9176)
+* Fixed bug which prevented adding new relationships to existing entities  [View Commit](../../commit/cdf27883b167d9a856916ee078973009a04861f8)
+* Fixed bugs with the next step button not enabling/disabling at the correct times  [View Commit](../../commit/4ae9ffe3b5fdbbcd7c92ee8b554a603836c34fa9)
+* Now shows the revised date (and labels it as such) on the admin list view for
+  revised disclosures. Un-revised disclosures still show the submitted date.  [View Commit](../../commit/ff428f15f3c4282c771cc39620499c700a40267b)
+* Improved accuracy of the admin status filter  [View Commit](../../commit/6ead42b2c70fd018c67a8a49c8a1f58d5ff8e2b8)
+* Fixed cancel button on the pi-revise/review screen  [View Commit](../../commit/7f0517f72be0b4d8bc714919d1cec156b56236fa)
+
+##coi-1511
 
 * Updated documentation
 * Added an AUTH_OVER_SSL environment variable which can be set to false if running on the same server
