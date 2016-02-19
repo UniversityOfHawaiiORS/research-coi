@@ -1,3 +1,33 @@
+usage()
+{
+cat << HERE
+usage: $0 options
+
+Start COI
+OPTIONS:
+        -h show this message
+        -d Debug Mode
+HERE
+}
+
+DEBUG=N
+while getopts "hd" OPTION
+do
+        case $OPTION in
+                h) usage
+                   exit 1
+                   ;;
+                d)
+                   DEBUG=Y
+                   ;;
+                ?)
+                   usage
+                   exit
+                   ;;
+        esac
+done
+
+
 BASEDIR=`dirname $0`
 export DB_PACKAGE=strong-oracle
 export COI_PORT=8070
@@ -38,9 +68,13 @@ fi
 
 #DB_NAME=kcdev node --debug-brk=51021 --nolazy server/bootstrap
 cd ${BASEDIR}
-# node server/bootstrap >> ${BASEDIR}/coi.out 2>&1 &
-# node-debug server/bootstrap.js
 export LOG_LEVEL=0
-./startcoi_nodeDiesFixLoop.sh >> ${BASEDIR}/coi.log 2>&1 &
-pid=$!
-echo $pid > ${BASEDIR}/running.pid
+if [ "${DEBUG}" == "Y" ]
+then
+    node debug server/bootstrap
+else
+    ./startcoi_nodeDiesFixLoop.sh >> ${BASEDIR}/coi.log 2>&1 &
+    pid=$!
+    echo $pid > ${BASEDIR}/running.pid
+    tail -f coi.log
+fi
