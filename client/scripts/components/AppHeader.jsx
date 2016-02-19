@@ -151,7 +151,7 @@ export class AppHeader extends React.Component {
     return (
       <header style={merge(styles.container, this.props.style)}>
         <span style={{margin: '6px 0', display: 'inline-block'}}>
-          <a href="/kc-dev">
+          <a href="/mygrant">
             <KualiLogo style={styles.logo} />
             <span style={styles.product}>
               Kuali

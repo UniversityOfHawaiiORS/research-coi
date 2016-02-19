@@ -37,8 +37,10 @@ then
 fi
 
 #DB_NAME=kcdev node --debug-brk=51021 --nolazy server/bootstrap
-#node-debug server/bootstrap.js
 cd ${BASEDIR}
-node server/bootstrap 2>&1 >> ${BASEDIR}/node.coi.log &
+# node server/bootstrap >> ${BASEDIR}/coi.out 2>&1 &
+# node-debug server/bootstrap.js
+export LOG_LEVEL=0
+./startcoi_nodeDiesFixLoop.sh >> ${BASEDIR}/coi.log 2>&1 &
 pid=$!
 echo $pid > ${BASEDIR}/running.pid
