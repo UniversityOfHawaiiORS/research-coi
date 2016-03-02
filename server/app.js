@@ -1,6 +1,6 @@
 /*
     The Conflict of Interest (COI) module of Kuali Research
-    Copyright © 2015 Kuali, Inc.
+    Copyright © 2005-2016 Kuali, Inc.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -16,31 +16,34 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import * as ConfigController from './controllers/ConfigController';
-import * as DisclosureController from './controllers/DisclosureController';
-import * as TravelLogController from './controllers/TravelLogController';
-import * as ProjectController from './controllers/ProjectController';
-import * as FileController from './controllers/FileController';
-import * as PIController from './controllers/PIController';
-import * as UserController from './controllers/UserController';
+import healthReport from './controllers/health-report';
+import * as ConfigController from './controllers/config-controller';
+import * as DisclosureController from './controllers/disclosure-controller';
+import * as TravelLogController from './controllers/travel-log-controller';
+import * as ProjectController from './controllers/project-controller';
+import * as FileController from './controllers/file-controller';
+import * as PIController from './controllers/pi-controller';
+import * as UserController from './controllers/user-controller';
+import * as AdditionalReviewerController from './controllers/additional-reviewer-controller';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import authentication from './middleware/authentication';
-import apiAuthentication from './middleware/apiAuthentication';
-import renderView from './middleware/renderView';
-import Log from './Log';
-import methodChecker from './middleware/methodChecker';
-import ErrorLogger from './middleware/ErrorLogger';
-import {COIConstants} from '../COIConstants';
-import {NOT_FOUND} from '../HTTPStatusCodes';
-import adminRoleCheck from './middleware/adminRoleCheck';
+import apiAuthentication from './middleware/api-authentication';
+import renderView from './middleware/render-view';
+import Log from './log';
+import methodChecker from './middleware/method-checker';
+import ErrorLogger from './middleware/error-logger';
+import { LOG_LEVEL } from '../coi-constants';
+import { NOT_FOUND } from '../http-status-codes';
+import { configCheck, adminCheck } from './middleware/role-check';
 import unauthorized from './middleware/unauthorized';
+import scheduleExpirationCheck from './expiration-check';
 
 const DEFAULT_PORT = 8090;
 
 function conditionallyLogRequests(app) {
-  if (process.env.LOG_LEVEL <= COIConstants.LOG_LEVEL.INFO) {
+  if (process.env.LOG_LEVEL <= LOG_LEVEL.INFO) {
     app.use((req, res, next) => {
       const startTime = new Date().getTime();
       res.on('finish', () => {
@@ -94,6 +97,7 @@ export function run() {
   app.use(cookieParser());
 
   app.use('/coi/auth', renderView('auth'));
+  app.use('/coi/health', healthReport);
   app.use('/api', apiAuthentication);
   app.use('/coi', authentication);
   app.use('/coi$', renderView('index'));
@@ -103,9 +107,10 @@ export function run() {
   app.use('/coi/disclosure', renderView('index'));
   app.use('/coi/travelLog', renderView('index'));
   app.use('/coi/revise', renderView('index'));
+  app.use('/coi/about', renderView('about'));
 
-  app.use('/coi/admin', adminRoleCheck, renderView('admin/admin'));
-  app.use('/coi/config', adminRoleCheck, renderView('admin/config'));
+  app.use('/coi/admin', adminCheck, renderView('admin/admin'));
+  app.use('/coi/config', configCheck, renderView('admin/config'));
   app.use('/coi', unauthorized);
 
   app.use(bodyParser.json());
@@ -116,8 +121,12 @@ export function run() {
   FileController.init(app);
   PIController.init(app);
   UserController.init(app);
+  AdditionalReviewerController.init(app);
   app.use(ErrorLogger);
 
   app.set('portNumber', config ? config.port : process.env.COI_PORT || DEFAULT_PORT);
+
+  scheduleExpirationCheck();
+
   return app;
 }

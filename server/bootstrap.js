@@ -1,6 +1,6 @@
 /*
     The Conflict of Interest (COI) module of Kuali Research
-    Copyright © 2015 Kuali, Inc.
+    Copyright © 2005-2016 Kuali, Inc.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -16,12 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-/* eslint-disable */
+/* eslint-disable no-var, prefer-arrow-callback, prefer-template, no-console */
 
-require('babel-register');
 require('babel-polyfill');
 var app = require('./app');
-var Log = require('./Log');
+var Log = require('./log').default;
 
 var application = app.run();
 var portNumber = application.get('portNumber');

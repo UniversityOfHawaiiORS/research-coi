@@ -1,7 +1,7 @@
 INSTRUCTIONS
 ================
 
-**Step 1**: download and install [Node.js and npm](https://docs.npmjs.com/getting-started/installing-node) version 0.12.7 or newer.
+**Step 1**: download and install [Node.js and npm](https://docs.npmjs.com/getting-started/installing-node) version 4.2.6 or newer. This is the current LTS version of Node.
 
 ----------
 **Step 2**: clone [research-coi project](https://github.com/kuali/research-coi)
@@ -76,17 +76,17 @@ module.exports = {
 
 **Step 6**: Apply Migrations:
 ```
-node ~/workspace/kc-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> migrate:latest --env kc_coi
+node research-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> migrate:latest --env kc_coi
 ```
 ----------
 **Step 7**: Apply Seed Data:
 ```
-node ~/workspace/kc-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> seed:run --env kc_coi
+node research-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> seed:run --env kc_coi
 ```
 
 Alternatively you can add some demonstration data to play with:
 ```
-node ~/workspace/kc-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> seed:run --env kc_coi demo
+node research-coi/node_modules/knex/lib/bin/cli.js --cwd=db/migration --knexfile <replace with knexfile.js path> seed:run --env kc_coi demo
 ```
 
 **Step 8**: Configuration Environment Variables:
@@ -137,6 +137,10 @@ System configuration for COI is done with environment variables. Environment var
 >**TRUST_PROXY**
 >: The value to pass to app.set('trust_proxy', <YOUR STRING HERE>)
 >*Default*:  None
+>
+>**RESEARCH_CORE_URL**
+>: The absolute path to the research core application. Used when linking to or calling services from research core.
+>  *Default*: https://uit.kuali.dev/res
 
 -------
 
@@ -152,6 +156,10 @@ System configuration for COI is done with environment variables. Environment var
 >: Flag as true if you have an auth service instance you can work with, if not present or false app will use a mock auth service.
 >*Default*: false
 >
+>**AUTH_URL**
+>: The the absolute path to the authentication service
+>*Default*: false
+>
 >**CACHE_MAX**
 >: The maximum number of items in the cache. Used by the auth service.
 >*Default*: 500
@@ -160,18 +168,17 @@ System configuration for COI is done with environment variables. Environment var
 >: The maximum age in milliseconds for an item to be valid in the cache. Used by the auth service.
 >*Default*: 60000
 >
->**AUTHZ_HOST**
->  : The host name for the authorization service end points.  This should be the host name of your KC monolith application.
->  *Default*: uit.kuali.co
-
->**AUTHZ_ADMIN_ROLE**
-> : The role name space and name separated by a colon.
+>**COI_ADMIN_ROLE**
+>: The research core coi admin role name space and name separated by a colon.
 > *Default*:  KC-COIDISCLOSURE:COI%20Administrator
-
+>
+>**COI_REVIEWER_ROLE**
+>: The research core coi reviewer role name space and name separated by a colon.
+> *Default*:  KC-COIDISCLOSURE:COI%20Reviewer
+>
 >**AUTH_OVER_SSL**
 > : If your are sure you want to use the auth service over http set this to false.
 > *Default*:  true
-
 
 **Step 9**: Run Webpack
 ```
@@ -181,7 +188,7 @@ This may take a few minutes. There will likely be some warnings, but there shoul
 
 **Step 10**: Start Up Node
 ```
-DB_NAME=coi node server/bootstrap
+DB_NAME=<db_name> DB_PACKAGE=<strong-oracle/mysql> npm start
 ```
 
 **Step 11**: Navigate to hostname:port/coi/
