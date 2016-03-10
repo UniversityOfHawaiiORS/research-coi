@@ -7,11 +7,13 @@ Start COI
 OPTIONS:
         -h show this message
         -d Debug Mode
+	-c Clear the log first
 HERE
 }
 
 DEBUG=N
-while getopts "hd" OPTION
+CLEARLOG=N
+while getopts "hcd" OPTION
 do
         case $OPTION in
                 h) usage
@@ -19,6 +21,9 @@ do
                    ;;
                 d)
                    DEBUG=Y
+                   ;;
+                c)
+                   CLEARLOG=Y
                    ;;
                 ?)
                    usage
@@ -55,6 +60,8 @@ export AUTHZ_ADMIN_ROLE=KC-COIDISCLOSURE:COI%20Administrator
 # Documented here http://expressjs.com/en/guide/behind-proxies.html
 export TRUST_PROXY="true"
 
+export RESEACH_CORE_URL=https://kcdev3.ors.hawaii.edu/mygrant
+
 export OCI_LIB_DIR=$OCI_HOME
 export OCI_INCLUDE_DIR=$OCI_HOME/sdk/include
 export DYLD_LIBRARY_PATH=$OCI_LIB_DIR
@@ -73,6 +80,10 @@ if [ "${DEBUG}" == "Y" ]
 then
     node debug server/bootstrap
 else
+    if [ "${CLEARLOG}" == "Y" ]
+    then
+        rm ${BASEDIR}/coi.log
+    fi
     ./startcoi_nodeDiesFixLoop.sh >> ${BASEDIR}/coi.log 2>&1 &
     pid=$!
     echo $pid > ${BASEDIR}/running.pid

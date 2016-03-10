@@ -5,7 +5,8 @@ BASEDIR=`dirname $0`
 while [ 1 ]
 do
     date >> ${BASEDIR}/coi.log
-    node server/bootstrap >> ${BASEDIR}/coi.log 2>&1
+    #node server/bootstrap.js >> ${BASEDIR}/coi.log 2>&1
+    npm start >> ${BASEDIR}/coi.log 2>&1
     echo "Process died restarting" >> ${BASEDIR}/coi.log
 done
 
