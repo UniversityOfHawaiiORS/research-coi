@@ -7,12 +7,12 @@ Start COI
 OPTIONS:
         -h show this message
         -d Debug Mode
-	-c Clear the log first
+	-c Y/N (default Y)
 HERE
 }
 
 DEBUG=N
-CLEARLOG=N
+CLEARLOG=Y
 while getopts "hcd" OPTION
 do
         case $OPTION in
@@ -23,7 +23,7 @@ do
                    DEBUG=Y
                    ;;
                 c)
-                   CLEARLOG=Y
+                   CLEARLOG=${OPTARG}
                    ;;
                 ?)
                    usage
@@ -84,8 +84,7 @@ else
     then
         rm ${BASEDIR}/coi.log
     fi
-    ./startcoi_nodeDiesFixLoop.sh >> ${BASEDIR}/coi.log 2>&1 &
+    npm start >> ${BASEDIR}/coi.log 2>&1 &
     pid=$!
     echo $pid > ${BASEDIR}/running.pid
-    tail -f coi.log
 fi
