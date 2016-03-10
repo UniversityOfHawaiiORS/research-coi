@@ -55,7 +55,8 @@ const updatePIResponseComment = (dbInfo, userInfo, disclosureId, targetType, tar
       'c.disclosure_id': disclosureId,
       'c.topic_section': targetType,
       'c.topic_id': targetId,
-      'c.user_id': userInfo.schoolId
+      'c.user_id': userInfo.schoolId,
+      'c.user_role' : COIConstants.ROLES.USER
     })
     .then(comments => {
       if (comments.length > 0) {
@@ -212,7 +213,7 @@ const getSubQuestions = (knex, disclosureId, potentialParentIDs) => {
 };
 
 const getComments = (knex, disclosureId, topicIDs, section) => {
-  return knex.select('id', 'topic_id as topicId', 'text', 'author', 'date', 'user_id as userId')
+  return knex.select('id', 'topic_id as topicId', 'text', 'author', 'date', 'user_id as userId', 'user_role as userRole')
     .from('comment as c')
     .where({
       'disclosure_id': disclosureId,
@@ -234,9 +235,9 @@ const getDeclarationComments = (knex, disclosureId, topicIDs) => {
   return getComments(knex, disclosureId, topicIDs, COIConstants.DISCLOSURE_STEP.PROJECTS);
 };
 
-const setAdminCommentsForTopics = (topics, comments, currentUserId) => {
+const setAdminCommentsForTopics = (topics, comments) => {
   comments.filter(comment => {
-    return comment.userId !== currentUserId;
+    return comment.userRole !== COIConstants.ROLES.USER;
   }).forEach(comment => {
     const topic = topics.find(topicToTest => {
       return topicToTest.id === comment.topicId;
@@ -253,7 +254,7 @@ const setAdminCommentsForTopics = (topics, comments, currentUserId) => {
 
 const setPIResponseForTopics = (topics, comments, currentUserId) => {
   comments.filter(comment => {
-    return comment.userId === currentUserId;
+    return comment.userId === currentUserId && comment.userRole === COIConstants.ROLES.USER;
   }).forEach(comment => {
     const topic = topics.find(topicToTest => {
       return topicToTest.id === comment.topicId;
@@ -306,7 +307,7 @@ const getQuestionsToReview = (knex, disclosureId, userId, reviewItems) => {
   .then(([questions, comments, subQuestions]) => {
     associateSubQuestions(questions, subQuestions);
     setPIResponseForTopics(questions, comments, userId);
-    setAdminCommentsForTopics(questions, comments, userId);
+    setAdminCommentsForTopics(questions, comments);
     setPIReviewDataForTopics(questions, reviewItems);
     return questions;
   });
@@ -489,7 +490,7 @@ const getEntitiesToReview = (knex, disclosureId, userId, reviewItems) => {
     setQuestionAnswersForEntities(entities, entityQuestionAnswers);
     setPIResponseForTopics(entities, comments, userId);
     setRelationshipsForEntities(entities, relationships);
-    setAdminCommentsForTopics(entities, comments, userId);
+    setAdminCommentsForTopics(entities, comments);
     setPIReviewDataForTopics(entities, reviewItems);
     setFilesForEntities(entities, files);
     return entities;

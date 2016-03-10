@@ -16,13 +16,13 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/* This code is copied from core.  Once there is a
-   shared library we should use it instead. */
-export default function(fn) {
-  return (req, res, next) => {
-    fn(req, res, next)
-      .catch(err => {
-        next(err);
-      });
-  };
-}
+/* eslint-disable prefer-arrow-callback */
+
+exports.up = function(knex) {
+  return knex.schema.table('project_person', function(table) {
+    table.boolean('new').notNullable().defaultTo(true);
+  });
+};
+
+exports.down = function() {
+};

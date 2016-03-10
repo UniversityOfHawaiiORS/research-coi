@@ -16,13 +16,29 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-/* This code is copied from core.  Once there is a
-   shared library we should use it instead. */
-export default function(fn) {
-  return (req, res, next) => {
-    fn(req, res, next)
-      .catch(err => {
-        next(err);
-      });
-  };
-}
+/*  eslint-disable
+ camelcase,
+ no-console,
+ no-magic-numbers,
+ no-var,
+ object-shorthand,
+ prefer-template,
+ prefer-arrow-callback,
+ max-len
+ */
+
+exports.up = function(knex) {
+  return knex('disclosure_status')
+    .update({description: 'Revision Required'})
+    .where({status_cd: 4})
+  .then(function() {
+    return knex('disclosure_status')
+    .insert({
+      status_cd: 7,
+      description: 'Update Needed'
+    });
+  });
+};
+
+exports.down = function() {
+};

@@ -107,7 +107,12 @@ describe('DisclosureController',async () => {
       disclosure_id: disclosureId,
       user_id: reviewerId,
       name: reviewer,
-      email: 'test@test.com'
+      email: 'test@test.com',
+      active: true,
+      dates: JSON.stringify([{
+        type: COIConstants.DATE_TYPE.ASSIGNED,
+        date: new Date(2016,0,0)
+      }])
     },'id');
 
     additionalReviewerId = additionalReviewer[0];
@@ -120,6 +125,25 @@ describe('DisclosureController',async () => {
       config_id: 1}, 'id');
 
     disclosure1Id = disclosure1[0];
+
+    const projectType = await knex('project_type').min('type_cd as typeCd');
+
+    const projectId = await knex('project')
+      .insert({
+        title: 'project test',
+        type_cd: projectType[0].typeCd,
+        source_system: 'propdev',
+        source_identifier: 1
+      }, 'id');
+
+    await knex('project_person')
+      .insert({
+        project_id: projectId[0],
+        person_id: userId,
+        source_person_type: 'person',
+        role_cd: 'PI',
+        active: true
+      }, 'id');
   });
 
   describe('/api/coi/disclosure/:id', async () => {
@@ -134,6 +158,9 @@ describe('DisclosureController',async () => {
       assert.equal(disclosure.typeCd, COIConstants.DISCLOSURE_TYPE.ANNUAL);
       assert.equal(disclosure.statusCd, COIConstants.DISCLOSURE_STATUS.IN_PROGRESS);
       assert.equal(formatDate(disclosure.startDate), formatDate(today));
+      assert.equal(1, disclosure.reviewers.length);
+      assert.equal(1, disclosure.reviewers[0].dates.length);
+      assert.equal(COIConstants.DATE_TYPE.ASSIGNED, disclosure.reviewers[0].dates[0].type);
     });
 
     it('user should not be able to retrieve others disclosures', async function () {
@@ -261,6 +288,11 @@ describe('DisclosureController',async () => {
         .select('status_cd','submitted_by', 'submitted_date')
         .where({id: disclosure.id});
 
+      const projectPersons = await knex('project_person')
+        .select('new')
+        .where({person_id: userId});
+
+      assert.equal(false, projectPersons[0].new);
       assert.equal(submittedDisclosure[0].status_cd, COIConstants.DISCLOSURE_STATUS.SUBMITTED_FOR_APPROVAL);
       assert.equal(submittedDisclosure[0].submitted_by, `User ${user}`);
       assert.equal(formatDate(submittedDisclosure[0].submitted_date), formatDate(today));
@@ -333,6 +365,8 @@ describe('DisclosureController',async () => {
   });
 
   after(async function() {
+    await knex('project_person').del();
+    await knex('project').del();
     await knex('comment').del().whereIn('disclosure_id', [disclosureId, disclosure1Id]);
     await knex('additional_reviewer').del().where({id: additionalReviewerId});
     await knex('disclosure_archive').del().whereIn('disclosure_id', [disclosureId, disclosure1Id]);

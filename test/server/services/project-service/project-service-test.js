@@ -120,4 +120,92 @@ describe('ProjectService', () => {
       assert.equal('Co-Investigator', roles.find(role => String(role.sourceRoleCd) === 'COI').description);
     });
   });
+
+  describe('isRequired', () => {
+
+    const requirements = {};
+    requirements.roles = [
+      {
+        projectTypeCd: 1,
+        sourceRoleCd: 'PI'
+      },
+      {
+        projectTypeCd: 1,
+        sourceRoleCd: 'COI'
+      }
+    ];
+    requirements.types = [
+      {typeCd: 1}
+    ];
+    requirements.statuses = [
+      {
+        projectTypeCd: 1,
+        sourceStatusCd: '1'
+      },
+      {
+        projectTypeCd: 1,
+        sourceStatusCd: '2'
+      }
+    ];
+    requirements.sponsors = ['000340','000500'];
+
+    const projects = [
+      {
+        title: 'good project',
+        typeCd: 1,
+        roleCd: 'PI',
+        statusCd: '1',
+        sponsorCd : '000340'
+      },
+      {
+        typeCd: 3,
+        roleCd: 'PI',
+        statusCd: '1',
+        sponsorCd : '000340'
+      },
+      {
+        typeCd: 1,
+        roleCd: 'KP',
+        statusCd: '1',
+        sponsorCd : '000340'
+      },
+      {
+        typeCd: 1,
+        roleCd: 'PI',
+        statusCd: '4',
+        sponsorCd : '000340'
+      },
+      {
+        typeCd: 1,
+        roleCd: 'PI',
+        statusCd: '1',
+        sponsorCd : '000100'
+      }
+    ];
+
+    it('should return true if type, role, status, and sponsor are required', () => {
+      const isRequired = ProjectService.isRequired(requirements, projects[0]);
+      assert.equal(true, isRequired);
+    });
+
+    it('should return false if type is not required', () => {
+      const isRequired = ProjectService.isRequired(requirements, projects[1]);
+      assert.equal(false, isRequired);
+    });
+
+    it('should return false if role is not required', () => {
+      const isRequired = ProjectService.isRequired(requirements, projects[2]);
+      assert.equal(false, isRequired);
+    });
+
+    it('should return false if status is not required', () => {
+      const isRequired = ProjectService.isRequired(requirements, projects[3]);
+      assert.equal(false, isRequired);
+    });
+
+    it('should return false if sponsor is not required', () => {
+      const isRequired = ProjectService.isRequired(requirements, projects[4]);
+      assert.equal(false, isRequired);
+    });
+  });
 });

@@ -18,8 +18,10 @@
 
 import { getAuthToken } from '../auth-service/auth-service';
 import request from 'superagent';
-import { getRequiredProjectTypes, getRequiredProjectStatuses, getRequiredProjectRoles} from '../../db/config-db';
+import { getRequiredProjectTypes, getRequiredProjectStatuses, getRequiredProjectRoles } from '../../db/config-db';
 import Log from '../../log';
+import cache from '../../lru-cache';
+
 let getAuthorizationInfo;
 try {
   const extensions = require('research-extensions').default;
@@ -27,7 +29,8 @@ try {
 } catch (e) {
   getAuthorizationInfo = (dbInfo) => { //eslint-disable-line no-unused-vars
     return {
-      researchCoreUrl: process.env.RESEARCH_CORE_URL || 'https://uit.kuali.dev/res'
+      researchCoreUrl: process.env.RESEARCH_CORE_URL || 'https://uit.kuali.dev/res',
+      coiHierarchy: process.env.COI_HIERARCHY
     };
   };
 }
@@ -40,22 +43,23 @@ const END_POINTS = {
   IRB_ROLES: '/protocol/api/v1/protocol-person-roles/',
   IRB_STATUS: '/protocol/api/v1/protocol-statuses/',
   IACUC_ROLES: '/protocol/api/v1/iacuc-protocol-person-roles/',
-  IACUC_STATUS: '/protocol/api/v1/iacuc-protocol-statuses/'
+  IACUC_STATUS: '/protocol/api/v1/iacuc-protocol-statuses/',
+  SPONSOR_HIERARCHY: '/research-common/api/v1/sponsor-hierarchies/?hierarchyName='
 };
 
-async function callEndPoint(dbInfo, authHeader, endPoint) {
+const REQUIRED_SPONSORS_KEY = 'requiredSponsors';
+
+async function callEndPoint(researchCoreUrl, authHeader, endPoint) {
   try {
-    const authInfo = getAuthorizationInfo(dbInfo);
-    const response = await request.get(`${authInfo.researchCoreUrl}${endPoint}`)
+    const response = await request.get(`${researchCoreUrl}${endPoint}`)
       .set('Authorization', `Bearer ${getAuthToken(authHeader)}`);
 
     if (response.ok) {
       return Promise.resolve(response.body);
     }
-    Log.error(response.body.message);
     return Promise.resolve([]);
   } catch(err) {
-    Log.error(err);
+    Log.error(`cannot access ${researchCoreUrl}${endPoint}`);
     return Promise.resolve([]);
   }
 }
@@ -127,7 +131,8 @@ function filterRoles(roles, projectTypeCd) {
 
 async function prepareProjectData(dbInfo, authHeader, projectTypeCd, roleEndPoint, statusEndPoint) {
   try {
-    const monolithProjectRoles = await callEndPoint(dbInfo, authHeader, roleEndPoint);
+    const authInfo = getAuthorizationInfo(dbInfo);
+    const monolithProjectRoles = await callEndPoint(authInfo.researchCoreUrl, authHeader, roleEndPoint);
     const unfilteredRoles = monolithProjectRoles.map(monolithRole => {
       return {
         projectTypeCd,
@@ -139,7 +144,7 @@ async function prepareProjectData(dbInfo, authHeader, projectTypeCd, roleEndPoin
 
     const roles = filterRoles(unfilteredRoles, projectTypeCd);
 
-    const monolithStatuses = await callEndPoint(dbInfo, authHeader, statusEndPoint);
+    const monolithStatuses = await callEndPoint(authInfo.researchCoreUrl, authHeader, statusEndPoint);
     const statuses = monolithStatuses.map(monolithStatus => {
       return {
         projectTypeCd,
@@ -175,27 +180,74 @@ export async function getProjectData(dbInfo, authHeader, projectTypeCd) {
   }
 }
 
-export async function filterProjects(dbInfo, projects) {
+async function getRequiredSponsors(researchCoreUrl, coiHierarchy, authHeader) {
   try {
-    const requiredProjectTypes = await getRequiredProjectTypes(dbInfo);
-    const requiredProjectRoles = await getRequiredProjectRoles(dbInfo);
-    const requiredProjectStatuses = await getRequiredProjectStatuses(dbInfo);
+    if (!coiHierarchy) {
+      return Promise.resolve();
+    }
 
-    const result = projects.filter(project => {
-      const isProjectTypeRequired = requiredProjectTypes.findIndex(projectType => projectType.typeCd == project.typeCd) > -1; // eslint-disable-line eqeqeq
-      const isProjectProjectRoleRequired = requiredProjectRoles.findIndex(projectRole => {
-        return projectRole.projectTypeCd == project.typeCd && projectRole.sourceRoleCd == project.roleCd; // eslint-disable-line eqeqeq
-      }) > -1;
-      const isProjectStatusRequired = requiredProjectStatuses.findIndex(projectStatus => {
-        return projectStatus.projectTypeCd == project.typeCd && projectStatus.sourceStatusCd == project.statusCd; // eslint-disable-line eqeqeq
-      }) > -1;
+    let requiredSponsors = cache.get(REQUIRED_SPONSORS_KEY);
 
-      return isProjectTypeRequired && isProjectProjectRoleRequired && isProjectStatusRequired;
+    if (requiredSponsors) {
+      return Promise.resolve(requiredSponsors);
+    }
+    const response = await request.get(`${researchCoreUrl}${END_POINTS.SPONSOR_HIERARCHY}${coiHierarchy}`)
+      .set('Authorization', `Bearer ${getAuthToken(authHeader)}`);
+
+    requiredSponsors = response.body.map(sponsor => {
+      return sponsor.sponsorCode;
     });
 
+    cache.set(REQUIRED_SPONSORS_KEY, requiredSponsors);
+
+    return Promise.resolve(requiredSponsors);
+  } catch(err) {
+    return Promise.reject(`cannot access ${researchCoreUrl}${END_POINTS.SPONSOR_HIERARCHY}${coiHierarchy}`);
+  }
+}
+
+async function getRequirements(dbInfo, authHeader) {
+  const authInfo = getAuthorizationInfo(dbInfo);
+  const requirements = {};
+  requirements.types = await getRequiredProjectTypes(dbInfo);
+  requirements.roles = await getRequiredProjectRoles(dbInfo);
+  requirements.statuses = await getRequiredProjectStatuses(dbInfo);
+  requirements.sponsors = process.env.NODE_ENV === 'test' ?
+    ['000340','000500'] :
+    await getRequiredSponsors(authInfo.researchCoreUrl, authInfo.coiHierarchy, authHeader);
+  return requirements;
+}
+
+export function isRequired(requirements, project) {
+  const isTypeRequired = requirements.types.findIndex(type => type.typeCd == project.typeCd) > -1; // eslint-disable-line eqeqeq
+  const isRoleRequired = requirements.roles.findIndex(role => {
+    return role.projectTypeCd == project.typeCd && role.sourceRoleCd == project.roleCd; // eslint-disable-line eqeqeq
+  }) > -1;
+  const isStatusRequired = requirements.statuses.findIndex(status => {
+    return status.projectTypeCd == project.typeCd && status.sourceStatusCd == project.statusCd; // eslint-disable-line eqeqeq
+  }) > -1;
+  const isSponsorRequired = requirements.sponsors ? requirements.sponsors.includes(project.sponsorCd) : true;
+
+  return isTypeRequired && isRoleRequired && isStatusRequired && isSponsorRequired;
+}
+
+export async function filterProjects(dbInfo, projects, authHeader) {
+  try {
+    const requirements = await getRequirements(dbInfo, authHeader);
+    const result = projects.filter(project => {
+      return isRequired(requirements, project);
+    });
     return Promise.resolve(result);
   } catch(err) {
     return Promise.reject(err);
   }
+}
 
+export async function isProjectRequired(dbInfo, project, authHeader) {
+  try {
+    const requirements = await getRequirements(dbInfo, authHeader);
+    return isRequired(requirements, project);
+  } catch(err) {
+    return Promise.reject(err);
+  }
 }

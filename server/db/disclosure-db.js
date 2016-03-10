@@ -19,6 +19,8 @@
 /* eslint-disable camelcase */
 
 import {isDisclosureUsers} from './common-db';
+import { getProjects } from './project-db';
+import { filterProjects } from '../services/project-service/project-service';
 import * as FileService from '../services/file-service/file-service';
 import {camelizeJson} from './json-utils';
 import {COIConstants} from '../../coi-constants';
@@ -596,7 +598,7 @@ export const get = (dbInfo, userInfo, disclosureId, trx) => {
       .innerJoin('disclosure as di', 'di.user_id', 'pp.person_id')
       .where('d.disclosure_id', disclosureId),
     retrieveComments(dbInfo, userInfo, disclosureId),
-    knex.select('id', 'name', 'key', 'file_type')
+    knex.select('id', 'name', 'key', 'file_type as fileType')
       .from('file')
       .whereIn('file_type', [COIConstants.FILE_TYPE.DISCLOSURE, COIConstants.FILE_TYPE.ADMIN])
       .andWhere({
@@ -609,8 +611,14 @@ export const get = (dbInfo, userInfo, disclosureId, trx) => {
         file_type: COIConstants.FILE_TYPE.MANAGEMENT_PLAN
       }),
     knex('additional_reviewer')
-      .select('id', 'disclosure_id as disclosureId', 'user_id as userId', 'name', 'email', 'title', 'unit_name as unitName')
-      .where({disclosure_id: disclosureId}),
+      .select('id', 'disclosure_id as disclosureId', 'user_id as userId', 'name', 'email', 'title', 'unit_name as unitName', 'active', 'dates')
+      .where({disclosure_id: disclosureId})
+      .then(reviewers => {
+        return reviewers.map(reviewer => {
+          reviewer.dates = JSON.parse(reviewer.dates);
+          return reviewer;
+        });
+      }),
     isDisclosureUsers(dbInfo, disclosureId, userInfo.schoolId)
   ]).then(([
     disclosureRecords,
@@ -927,14 +935,29 @@ export const getExpirationDate = (date, isRolling, dueDate) => {
   return new Date(dueDate.setFullYear(date.getFullYear() + 1));
 };
 
-const approveDisclosure = (knex, disclosureId, expiredDate) => {
+const approveDisclosure = (knex, disclosureId, expiredDate, userId, dbInfo, authHeader) => {
+  return knex('disclosure').select('user_id as userId').where({id: disclosureId}).then(disclosure => {
+    return getProjects(undefined, disclosure[0].userId, knex).then(projects => {
+      return filterProjects(dbInfo, projects, authHeader).then(requiredProjects => {
+        const newActiveProjects = requiredProjects.filter(project => {
+          return project.new === 1;
+        });
+        let status = COIConstants.DISCLOSURE_STATUS.UP_TO_DATE;
+
+        if (newActiveProjects && newActiveProjects.length > 0) {
+          status = COIConstants.DISCLOSURE_STATUS.UPDATE_REQUIRED;
+        }
+
   return knex('disclosure')
     .update({
       expired_date: expiredDate,
-      status_cd: COIConstants.DISCLOSURE_STATUS.UP_TO_DATE,
+            status_cd: status,
       last_review_date: new Date()
     })
     .where('id', disclosureId);
+      });
+    });
+  });
 };
 
 const archiveDisclosure = (knex, disclosureId, approverName, disclosure) => {
@@ -972,14 +995,19 @@ const deletePIReviewsForDisclsoure = (knex, disclosureId) => {
     .where('disclosure_id', disclosureId);
 };
 
-export const approve = (dbInfo, disclosure, displayName, disclosureId, trx) => {
+function deleteAdditionalReviewers(knex, disclosureId) {
+  return knex('additional_reviewer')
+    .del()
+    .where('disclosure_id', disclosureId);
+}
+
+export const approve = (dbInfo, disclosure, displayName, disclosureId, authHeader, trx) => {
   let knex;
   if (trx) {
     knex = trx;
   } else {
     knex = getKnex(dbInfo);
   }
-
 
   disclosure.statusCd = COIConstants.DISCLOSURE_STATUS.UP_TO_DATE;
   disclosure.lastReviewDate = new Date();
@@ -990,12 +1018,13 @@ export const approve = (dbInfo, disclosure, displayName, disclosureId, trx) => {
     deleteComments(knex, disclosureId),
     deleteAnswersForDisclosure(knex, disclosureId),
     deletePIReviewsForDisclsoure(knex, disclosureId),
+    deleteAdditionalReviewers(knex, disclosureId),
     updateEntitiesAndRelationshipsStatuses(knex, disclosureId, COIConstants.RELATIONSHIP_STATUS.PENDING, COIConstants.RELATIONSHIP_STATUS.IN_PROGRESS)
   ])
   .then(([config]) => {
     const generalConfig = JSON.parse(config[0].config).general;
     const expiredDate = getExpirationDate(new Date(disclosure.submittedDate), generalConfig.isRollingDueDate, new Date(generalConfig.dueDate));
-    return approveDisclosure(knex, disclosureId, expiredDate);
+    return approveDisclosure(knex, disclosureId, expiredDate, disclosure.userId, dbInfo, authHeader);
   });
 };
 
@@ -1009,7 +1038,18 @@ const updateStatus = (knex, name, disclosureId) => {
   .where('id', disclosureId);
 };
 
-export const submit = (dbInfo, userInfo, disclosureId) => {
+function updateProjects(trx, schoolId) {
+  return trx('project_person')
+    .update({
+      new: false
+    })
+    .where({
+      person_id: schoolId,
+      active: true
+    });
+}
+
+export const submit = (dbInfo, userInfo, disclosureId, authHeader) => {
   return isDisclosureUsers(dbInfo, disclosureId, userInfo.schoolId)
     .then(isSubmitter => {
       if (!isSubmitter) {
@@ -1020,7 +1060,8 @@ export const submit = (dbInfo, userInfo, disclosureId) => {
       return knex.transaction(trx => {
         return Promise.all([
           updateStatus(trx, userInfo.name, disclosureId),
-          updateEntitiesAndRelationshipsStatuses(trx, disclosureId, COIConstants.RELATIONSHIP_STATUS.IN_PROGRESS, COIConstants.RELATIONSHIP_STATUS.DISCLOSED)
+          updateEntitiesAndRelationshipsStatuses(trx, disclosureId, COIConstants.RELATIONSHIP_STATUS.IN_PROGRESS, COIConstants.RELATIONSHIP_STATUS.DISCLOSED),
+          updateProjects(trx, userInfo.schoolId)
         ]).then(() => {
           return get(dbInfo, userInfo, disclosureId, trx).then(disclosure => {
             return trx('config').select('config').where({id: disclosure.configId}).then(config => {
@@ -1028,7 +1069,7 @@ export const submit = (dbInfo, userInfo, disclosureId) => {
               if (autoApprove) {
                 return trx('fin_entity').count('id as count').where({active: true, disclosure_id: disclosureId}).then(count => {
                   if (count[0].count === 0) {
-                    return approve(dbInfo, disclosure, COIConstants.SYSTEM_USER, disclosureId, trx);
+                    return approve(dbInfo, disclosure, COIConstants.SYSTEM_USER, disclosureId, authHeader, trx);
                   }
                 });
               }
@@ -1049,10 +1090,10 @@ export const reject = (dbInfo, userInfo, disclosureId) => {
   const knex = getKnex(dbInfo);
   return knex.transaction(trx => {
     return trx('disclosure')
-  .update({
-    status_cd: COIConstants.DISCLOSURE_STATUS.UPDATES_REQUIRED,
-    last_review_date: new Date()
-  })
+      .update({
+        status_cd: COIConstants.DISCLOSURE_STATUS.REVISION_REQUIRED,
+        last_review_date: new Date()
+      })
       .where('id', disclosureId).then(() => {
         return updateEditableComments(trx, disclosureId);
       });

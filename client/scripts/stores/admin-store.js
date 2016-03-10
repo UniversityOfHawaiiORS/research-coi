@@ -250,9 +250,7 @@ class _AdminStore {
     .type('application/json')
     .end(processResponse(err => {
       if (!err) {
-        this.applicationState.selectedDisclosure.statusCd = COIConstants.DISCLOSURE_STATUS.UP_TO_DATE;
-        this.applicationState.showingApproval = !this.applicationState.showingApproval;
-        this.emitChange();
+        window.location = `/coi/admin/detailview/${this.applicationState.selectedDisclosure.id}/${COIConstants.DISCLOSURE_STATUS.UP_TO_DATE}`;
       }
     }));
   }
@@ -269,7 +267,7 @@ class _AdminStore {
           comment.editable = false;
           return comment;
         });
-        this.applicationState.selectedDisclosure.statusCd = COIConstants.DISCLOSURE_STATUS.UPDATES_REQUIRED;
+        this.applicationState.selectedDisclosure.statusCd = COIConstants.DISCLOSURE_STATUS._REQUIRED;
         this.applicationState.showingRejection = !this.applicationState.showingRejection;
         this.emitChange();
       }
@@ -596,7 +594,7 @@ class _AdminStore {
   }
 
   completeReview() {
-    createRequest().del(`/api/coi/additional-reviewers/current/${this.applicationState.selectedDisclosure.id}`)
+    createRequest().put(`/api/coi/additional-reviewers/complete-review/${this.applicationState.selectedDisclosure.id}`)
       .end(processResponse(err => {
         if (!err) {
           window.location = '/coi/admin';

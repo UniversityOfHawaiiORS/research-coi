@@ -351,20 +351,24 @@ class _DisclosureStore {
         .get('/api/coi/disclosures/annual')
         .end(processResponse((err, disclosure) => {
           if (!err) {
-            Promise.all([
-              this.loadDisclosureState(disclosure.body.id),
-              this.loadArchivedConfig(disclosure.body.configId)
-            ])
-            .then(([, config]) => {
-              this.applicationState.currentDisclosureState.disclosure = disclosure.body;
-              this.entities = disclosure.body.entities;
-              this.declarations = disclosure.body.declarations;
-              this.files = disclosure.body.files;
+            if (COIConstants.EDITABLE_STATUSES.includes(disclosure.body.statusCd)) {
+              Promise.all([
+                this.loadDisclosureState(disclosure.body.id),
+                this.loadArchivedConfig(disclosure.body.configId)
+              ])
+              .then(([, config]) => {
+                this.applicationState.currentDisclosureState.disclosure = disclosure.body;
+                this.entities = disclosure.body.entities;
+                this.declarations = disclosure.body.declarations;
+                this.files = disclosure.body.files;
 
-              window.config = config.body;
-              ConfigActions.loadConfig(disclosure.body.configId);
-              this.emitChange();
-            });
+                window.config = config.body;
+                ConfigActions.loadConfig(disclosure.body.configId);
+                this.emitChange();
+              });
+            } else {
+              window.location = '/coi';
+            }
           }
         }));
     }
@@ -1152,6 +1156,7 @@ class _DisclosureStore {
       answers: []
     };
     this.applicationState.entityStates = {};
+    this.projects.forEach(project => project.new = false);
     this.updateDisclosureState(this.applicationState.currentDisclosureState.disclosure.id);
   }
 
