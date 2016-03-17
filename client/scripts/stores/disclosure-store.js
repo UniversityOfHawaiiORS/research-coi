@@ -144,16 +144,17 @@ export function entityRelationshipStepErrors(potentialRelationship, matrixTypes)
   return errors;
 }
 
-export function canSkipEntities(disclosure, skipFinancialEntities) {
-  const noActiveFinancialEnities = disclosure.entities
-    .filter(entity => entity.active === 1)
-    .length === 0;
+export function areNoActiveEntities(entities) {
+  return entities
+      .filter(entity => entity.active === 1)
+      .length === 0;
+}
 
-  const allYesNoQuestionsAreNo = disclosure.answers.filter(answer => {
-    return answer.question.question.type = COIConstants.QUESTION_TYPE.YESNO && answer.answer.value === 'Yes';
-  }).length === 0;
-
-  return noActiveFinancialEnities && allYesNoQuestionsAreNo && skipFinancialEntities;
+export function getYesNoYeses(answers, questions) {
+  return answers.filter(answer => {
+    return questions.find(question => question.id === answer.questionId).question.type === COIConstants.QUESTION_TYPE.YESNO
+      && answer.answer.value === 'Yes';
+  });
 }
 
 class _DisclosureStore {
@@ -168,7 +169,10 @@ class _DisclosureStore {
       entityInformationStepComplete: this.entityInformationStepComplete,
       entityRelationshipStepErrors: this.entityRelationshipStepErrors,
       entityRelationshipStepComplete: this.entityRelationshipStepComplete,
-      entityRelationshipsAreSubmittable: this.entityRelationshipsAreSubmittable
+      entityRelationshipsAreSubmittable: this.entityRelationshipsAreSubmittable,
+      enforceEntities: this.enforceEntities,
+      canSkipEntities: this.canSkipEntities,
+      warnActiveEntity: this.warnActiveEntity
     });
 
     // initialize state here
@@ -600,7 +604,7 @@ class _DisclosureStore {
   nextStep() {
     switch (this.applicationState.currentDisclosureState.step) {
       case COIConstants.DISCLOSURE_STEP.QUESTIONNAIRE_SUMMARY:
-        if (canSkipEntities(this.applicationState.currentDisclosureState.disclosure, window.config.general.skipFinancialEntities)) {
+        if (this.canSkipEntities(this.applicationState.currentDisclosureState.disclosure, window.config)) {
           this.applicationState.currentDisclosureState.step = COIConstants.DISCLOSURE_STEP.CERTIFY;
           break;
         }
@@ -673,7 +677,6 @@ class _DisclosureStore {
   setEntityActiveStatus([active, id]) {
     const entity = id ? this.getEntity(id) : this.applicationState.entityInProgress;
     entity.active = active;
-
     const formData = new FormData();
     formData.append('entity', JSON.stringify(entity));
     createRequest()
@@ -1419,6 +1422,24 @@ class _DisclosureStore {
         .type('application/json')
         .end(processResponse(() => {}));
     }
+  }
+
+  enforceEntities(disclosure, config) {
+    return getYesNoYeses(disclosure.answers, config.questions.screening).length > 0 &&
+      areNoActiveEntities(disclosure.entities) &&
+      config.general.enforceFinancialEntities;
+  }
+
+  canSkipEntities(disclosure, config) {
+    return areNoActiveEntities(disclosure.entities) &&
+      getYesNoYeses(disclosure.answers, config.questions.screening).length === 0 &&
+      config.general.skipFinancialEntities;
+  }
+
+  warnActiveEntity(disclosure, config) {
+    return !areNoActiveEntities(disclosure.entities) &&
+        getYesNoYeses(disclosure.answers, config.questions.screening).length === 0 &&
+        config.general.skipFinancialEntities;
   }
 }
 

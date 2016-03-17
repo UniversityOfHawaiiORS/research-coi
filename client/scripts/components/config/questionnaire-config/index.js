@@ -27,6 +27,7 @@ import NewQuestionButton from '../new-question-button';
 import {COIConstants} from '../../../../../coi-constants';
 import PanelWithButtons from '../panel-with-buttons';
 import ConfigActions from '../../../actions/config-actions';
+import AddSection from '../../add-section';
 
 class QuestionnaireConfig extends React.Component {
   constructor() {
@@ -270,7 +271,7 @@ class QuestionnaireConfig extends React.Component {
     ];
 
     let newQuestion;
-    let newQuestionButton;
+    let newQuestionSection;
     let nextQuestionYPosition = 0;
     const questionsJSX = [];
 
@@ -285,8 +286,15 @@ class QuestionnaireConfig extends React.Component {
       );
     }
     else {
-      newQuestionButton = (
-        <NewQuestionButton onClick={this.newQuestionStarted} />
+      let message;
+      if (this.props.questionnaireCategory === COIConstants.QUESTIONNAIRE_TYPE.SCREENING) {
+        message = 'Only parent-level, Yes/No questions can be used in screening questionnaire validations as configured in Screening Validations in General Configuration.'; //eslint-disable-line max-len
+      }
+      newQuestionSection = (
+        <AddSection
+          button={<NewQuestionButton onClick={this.newQuestionStarted} />}
+          message={message}
+        />
       );
     }
 
@@ -367,7 +375,7 @@ class QuestionnaireConfig extends React.Component {
 
     return (
       <div className={classNames(styles.container, this.props.className)}>
-        {newQuestionButton}
+        {newQuestionSection}
         {newQuestion}
 
         <div style={{position: 'relative', marginTop: 16, minHeight: nextQuestionYPosition}}>

@@ -19,6 +19,7 @@
 import styles from './style';
 import React from 'react';
 import ConfigAction from '../../../actions/config-actions';
+import classNames from 'classnames';
 
 export default class Textarea extends React.Component {
   constructor() {
@@ -35,9 +36,15 @@ export default class Textarea extends React.Component {
   }
 
   render() {
-    return (
-      <div>
-        <label htmlFor={this.props.path} className={styles.textLabel}>{this.props.label}</label>
+    let content;
+    if (this.props.readOnly) {
+      content = (
+        <div className={classNames(styles.readOnly)}>
+          {this.props.value}
+        </div>
+      );
+    } else {
+      content = (
         <textarea
           id={this.props.path}
           name={this.props.path}
@@ -45,6 +52,12 @@ export default class Textarea extends React.Component {
           value={this.props.value}
           onChange={this.set}
         />
+      );
+    }
+    return (
+      <div>
+        <label htmlFor={this.props.path} className={classNames(styles.textLabel, this.props.labelStyle)}>{this.props.label}</label>
+        {content}
       </div>
     );
   }

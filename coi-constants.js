@@ -125,7 +125,11 @@ export const STATE_TYPE = {
 
 export const NOT_YET_DISCLOSED = 'Not Yet Disclosed';
 
+export const DISCLOSURE_NOT_REQUIRED = 'Disclosure Not Required';
+
 export const SYSTEM_USER = 'system';
+
+export const COI_ADMIN = 'COI Admin';
 
 export const EDITABLE_STATUSES = [
   DISCLOSURE_STATUS.EXPIRED,
@@ -158,8 +162,10 @@ export const COIConstants = {
   LOG_LEVEL,
   STATE_TYPE,
   NOT_YET_DISCLOSED,
+  DISCLOSURE_NOT_REQUIRED,
   SYSTEM_USER,
   DATE_TYPE,
   EDITABLE_STATUSES,
-  APPROVED_STATUSES
+  APPROVED_STATUSES,
+  COI_ADMIN
 };
