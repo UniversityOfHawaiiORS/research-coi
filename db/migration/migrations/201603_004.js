@@ -16,31 +16,16 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-import React from 'react';
-import { BlueButton } from '../../../blue-button';
+/* eslint-disable prefer-arrow-callback, camelcase */
 
-export default class Textarea extends React.Component {
-  constructor() {
-    super();
-    this.onClick = this.onClick.bind(this);
-  }
-
-  onClick() {
-    this.props.onClick({
-      path: this.props.path,
-      templateId: this.props.templateId
+exports.up = function(knex) {
+  return knex('notification_template')
+    .insert({
+      template_id: 6,
+      type: 'Reporter Notifications',
+      description: 'Notify reporter when disclosure is approved.'
     });
-  }
+};
 
-  render() {
-    return (
-      <BlueButton
-        onClick={this.onClick}
-        style={{marginLeft: '10px'}}
-      >
-        {this.props.children}
-      </BlueButton>
-    );
-  }
-
-}
+exports.down = function() {
+};

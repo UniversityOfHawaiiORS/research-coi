@@ -16,31 +16,14 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-import React from 'react';
-import { BlueButton } from '../../../blue-button';
+import moment from 'moment';
 
-export default class Textarea extends React.Component {
-  constructor() {
-    super();
-    this.onClick = this.onClick.bind(this);
-  }
+moment.locale('en');
 
-  onClick() {
-    this.props.onClick({
-      path: this.props.path,
-      templateId: this.props.templateId
-    });
-  }
+export function formatDate(date: number) {
+  return moment(date).format('ll');
+}
 
-  render() {
-    return (
-      <BlueButton
-        onClick={this.onClick}
-        style={{marginLeft: '10px'}}
-      >
-        {this.props.children}
-      </BlueButton>
-    );
-  }
-
+export function formatDateTime(date: number) {
+  return moment(date).format('lll');
 }
